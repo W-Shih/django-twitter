@@ -14,11 +14,13 @@
 # =================================================================================================
 
 
+from django.contrib.auth import logout as django_logout
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
 from accounts.api.serializers import UserSerializer
 
 
@@ -46,6 +48,8 @@ class AccountViewSet(viewsets.ViewSet):
     # - detail refers to if this operation is on an specific resource obj
     #   If true, then this operation maps /accounts/{user_id}/login_status
     #   In this case, another argument pk needs to be passed in login_status()
+    # - methods refer to a list of http actions that allow
+    #   If an http action is not on the list, then it will return 405 - 'Method Not Allowed'
     @action(methods=['GET'], detail=False)
     def login_status(self, request):
         data = {'has_logged_in': request.user.is_authenticated}
@@ -53,4 +57,9 @@ class AccountViewSet(viewsets.ViewSet):
             data['user'] = UserSerializer(request.user).data
         return Response(data)
 
-
+    # <Wayne Shih> 06-Aug-2021
+    # Ref: https://docs.djangoproject.com/en/3.0/topics/auth/default/#django.contrib.auth.logout
+    @action(methods=['POST'], detail=False)
+    def logout(self, request):
+        django_logout(request)
+        return Response({'success': True})
