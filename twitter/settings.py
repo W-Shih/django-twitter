@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 05-Aug-2021  Wayne Shih              Initial settings, modify DATABASES and ALLOWED_HOSTS
+# 06-Aug-2021  Wayne Shih              Add rest_framework, and pagination
 # $HISTORY$
 # =================================================================================================
 
@@ -51,7 +52,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'rest_framework',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
