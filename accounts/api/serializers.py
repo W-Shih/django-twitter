@@ -2,8 +2,9 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
-#       Serializers allow complex data such as querysets and model instances to be converted to 
-#       native Python datatypes that can then be easily rendered into JSON, XML or other content types. 
+#       - Serializers allow complex data such as querysets and model instances to be converted to
+#         native Python datatypes that can then be easily rendered into JSON, XML or other content types.
+#       - Can be used as a validator to validate if request is valid
 #
 #       Ref: https://www.django-rest-framework.org/api-guide/serializers/
 #
@@ -21,3 +22,10 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email')
+
+# <Wayne Shih> 07-Aug-2021
+# Ref: https://www.django-rest-framework.org/api-guide/serializers/#field-level-validatio
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
