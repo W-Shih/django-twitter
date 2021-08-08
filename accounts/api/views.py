@@ -17,7 +17,7 @@
 from django.contrib.auth import (
     authenticate as django_authenticate,
     login as django_login,
-    logout as django_logout
+    logout as django_logout,
 )
 from django.contrib.auth.models import User
 from rest_framework import viewsets
@@ -25,7 +25,11 @@ from rest_framework import permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from accounts.api.serializers import UserSerializer, LoginSerializer
+from accounts.api.serializers import (
+    LoginSerializer,
+    SignupSerializer,
+    UserSerializer,
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -47,7 +51,7 @@ class AccountViewSet(viewsets.ViewSet):
     #   In this case, we need to write our own operations.
     # - Django rest framework url pattern: /resource/action/
 
-    serializer_class = LoginSerializer
+    serializer_class = SignupSerializer
 
     # <Wayne Shih> 06-Aug-2021
     # - This operation maps /accounts/login_status
@@ -117,3 +121,25 @@ class AccountViewSet(viewsets.ViewSet):
             'success': True,
             'user': UserSerializer(user).data
         })
+
+    @action(methods=['POST'], detail=False)
+    def signup(self, request):
+        # <Wayne Shih> 07-Aug-2021
+        # get post data
+        serializer = SignupSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'message': 'Please check input.',
+                'errors': serializer.errors,
+            }, status=400)
+
+        # <Wayne Shih> 07-Aug-2021
+        # If data got, create a new user and login
+        user = serializer.save()
+        django_login(request, user)
+        return Response({
+            'success': True,
+            'user': UserSerializer(user).data
+        }, status=201)
+
