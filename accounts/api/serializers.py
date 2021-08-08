@@ -11,6 +11,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 06-Aug-2021  Wayne Shih              Initial create
+# 07-Aug-2021  Wayne Shih              Add LoginSerializer and SignupSerializer
 # $HISTORY$
 # =================================================================================================
 
@@ -48,6 +49,7 @@ class SignupSerializer(serializers.ModelSerializer):
     # Default validate() only checks if exact the same.
     # We overwrite this method to make it not case-sensitive.
     def validate(self, data):
+        # TODO<HOMEWORK> 增加验证 username 是不是只由给定的字符集合构成
         if User.objects.filter(username=data['username'].lower()).exists():
             raise exceptions.ValidationError({
                 'message': 'This username has been occupied.'

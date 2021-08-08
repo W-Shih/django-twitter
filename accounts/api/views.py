@@ -10,6 +10,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 06-Aug-2021  Wayne Shih              Initial create
+# 07-Aug-2021  Wayne Shih              Add AccountViewSet  
 # $HISTORY$
 # =================================================================================================
 
@@ -41,16 +42,12 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
+# <Wayne Shih> 06-Aug-2021
+# - Don't sub-class from ModelViewSet. It has read/write operations. This is dangerous!
+# - Just sub-class from ViewSet. ViewSet has no read/write operations.
+#   In this case, we need to write our own operations.
+# - Django rest framework url pattern: /resource/action/
 class AccountViewSet(viewsets.ViewSet):
-    """
-    API endpoint that allows to see user's login_status
-    """
-    # <Wayne Shih> 06-Aug-2021
-    # - Don't sub-class from ModelViewSet. It has read/write operations. This is dangerous!
-    # - Just sub-class from ViewSet. ViewSet has no read/write operations.
-    #   In this case, we need to write our own operations.
-    # - Django rest framework url pattern: /resource/action/
-
     serializer_class = SignupSerializer
 
     # <Wayne Shih> 06-Aug-2021
@@ -62,6 +59,9 @@ class AccountViewSet(viewsets.ViewSet):
     #   If an http action is not on the list, then it will return 405 - 'Method Not Allowed'
     @action(methods=['GET'], detail=False)
     def login_status(self, request):
+        """
+        Check current login status 
+        """
         data = {'has_logged_in': request.user.is_authenticated}
         if request.user.is_authenticated:
             data['user'] = UserSerializer(request.user).data
@@ -71,6 +71,9 @@ class AccountViewSet(viewsets.ViewSet):
     # Ref: https://docs.djangoproject.com/en/3.0/topics/auth/default/#django.contrib.auth.logout
     @action(methods=['POST'], detail=False)
     def logout(self, request):
+        """
+        Logout current user
+        """
         django_logout(request)
         return Response({'success': True})
 
@@ -81,6 +84,9 @@ class AccountViewSet(viewsets.ViewSet):
     # - https://docs.djangoproject.com/en/3.2/ref/contrib/auth/#attributes
     @action(methods=['POST'], detail=False)
     def login(self, request):
+        """
+        Login
+        """
         # <Wayne Shih> 07-Aug-2021
         # get username and password from request
         serializer = LoginSerializer(data=request.data)
@@ -98,7 +104,8 @@ class AccountViewSet(viewsets.ViewSet):
 
         if not User.objects.filter(username=username).exists():
             # <Wayne Shih> 07-Aug-2021
-            # If you would like to be more secure, then just response 'username and password does not match.'
+            # If you would like to be more secure, then just let django_authenticate()
+            # to handle this case and then response 'username and password does not match.'
             # to avoid someone trying to get usernames.
             # Try to print debug detail:
             # print(User.objects.filter(username=username).query)
@@ -111,7 +118,7 @@ class AccountViewSet(viewsets.ViewSet):
         if not user or user.is_anonymous:
             return Response({
                 'success': False,
-                'message': 'Username and password does not match.'
+                'message': 'Username and password do not match.'
             }, status=400)
 
         # <Wayne Shih> 07-Aug-2021
@@ -124,6 +131,9 @@ class AccountViewSet(viewsets.ViewSet):
 
     @action(methods=['POST'], detail=False)
     def signup(self, request):
+        """
+        Give username, email, password to sign up a new user
+        """
         # <Wayne Shih> 07-Aug-2021
         # get post data
         serializer = SignupSerializer(data=request.data)
