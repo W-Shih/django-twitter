@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 05-Aug-2021  Wayne Shih              Initial settings, modify DATABASES and ALLOWED_HOSTS
 # 06-Aug-2021  Wayne Shih              Add rest_framework, and pagination
+# 07-Aug-2021  Wayne Shih              Add account
 # $HISTORY$
 # =================================================================================================
 
@@ -53,7 +54,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # third party
     'rest_framework',
+    # project apps
+    'accounts' ,
 ]
 
 REST_FRAMEWORK = {

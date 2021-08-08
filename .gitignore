@@ -8,8 +8,10 @@
 #    Date      Name                    Description of Change
 # 02-Aug-2021  Wayne Shih              Initial create from GitHub
 # 03-Aug-2021  Wayne Shih              Ignore vagrant-related files and PyCharm-related config
+# 07-Aug-2021  Wayne Shih              Ignore PyCharm-related config
 # $HISTORY$
 # =================================================================================================
+
 
 # <Wayne Shih> 03-Aug-2021 
 # vagrant-related files
@@ -19,6 +21,7 @@ Vagrantfile
 
 # <Wayne Shih> 03-Aug-2021 
 # PyCharm-related config
+.pycharm_helpers/
 .idea
 
 # Byte-compiled / optimized / DLL files
