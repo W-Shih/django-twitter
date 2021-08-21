@@ -12,6 +12,7 @@
 # 06-Aug-2021  Wayne Shih              Initial create
 # 07-Aug-2021  Wayne Shih              Add AccountViewSet 
 # 21-Aug-2021  Wayne Shih              Use rest_framework.status instead and add some comments
+# 21-Aug-2021  Wayne Shih              Add ip information in login_status for django-debug-toolbar
 # $HISTORY$
 # =================================================================================================
 
@@ -72,7 +73,10 @@ class AccountViewSet(viewsets.ViewSet):
         # - https://docs.djangoproject.com/en/3.2/ref/request-response/#attributes-set-by-middleware
         # is_authenticated is an attribute available on any subclass of AbstractBaseUser.
         # - https://docs.djangoproject.com/en/3.2/topics/auth/customizing/#django.contrib.auth.models.AbstractBaseUser
-        data = {'has_logged_in': request.user.is_authenticated}
+        data = {
+            'has_logged_in': request.user.is_authenticated,
+            'ip': request.META['REMOTE_ADDR'],
+        }
         if request.user.is_authenticated:
             # <Wayne Shih> 21-Aug-2021
             # - Add 'user' attribute to data.

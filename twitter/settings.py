@@ -9,6 +9,7 @@
 # 05-Aug-2021  Wayne Shih              Initial settings, modify DATABASES and ALLOWED_HOSTS
 # 06-Aug-2021  Wayne Shih              Add rest_framework, and pagination
 # 07-Aug-2021  Wayne Shih              Add account
+# 21-Aug-2021  Wayne Shih              Add django-debug-toolbar
 # $HISTORY$
 # =================================================================================================
 
@@ -39,10 +40,15 @@ SECRET_KEY = 'u7#94#6$fb7-d9+$oo&^grrvtm7%u30(l*q-fyzwmvoouj7=)_'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# <Wayne Shih> 05-Aug-2021 
-# Add white list, it can be domain name too
+# <Wayne Shih> 21-Aug-2021 
+# Add white list, it can be domain name too.
+# These are virtual machine's ip in host machine world.
 ALLOWED_HOSTS = [ '127.0.0.1' , '192.168.33.10' , 'localhost' ]
 
+# <Wayne Shih> 21-Aug-2021
+# Add host machine's ip in virtual machine to white list.
+# These are host machine's ip in host virtual world.
+INTERNAL_IPS = [ '10.0.2.2' , ]
 
 # Application definition
 
@@ -56,8 +62,11 @@ INSTALLED_APPS = [
 
     # third party
     'rest_framework',
+    # Django-Debug-Toolbar
+    'debug_toolbar',
+
     # project apps
-    'accounts' ,
+    'accounts',
 ]
 
 REST_FRAMEWORK = {
@@ -73,6 +82,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'twitter.urls'
