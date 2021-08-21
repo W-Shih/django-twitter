@@ -10,7 +10,8 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 06-Aug-2021  Wayne Shih              Initial create
-# 07-Aug-2021  Wayne Shih              Add AccountViewSet  
+# 07-Aug-2021  Wayne Shih              Add AccountViewSet 
+# 21-Aug-2021  Wayne Shih              Use rest_framework.status instead and add some comments
 # $HISTORY$
 # =================================================================================================
 
@@ -21,7 +22,7 @@ from django.contrib.auth import (
     logout as django_logout,
 )
 from django.contrib.auth.models import User
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework import permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -39,6 +40,9 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer # the class to render the data to json
+    # <Wayne Shih> 21-Aug-2021
+    # Set permission_classes
+    # - https://www.django-rest-framework.org/api-guide/permissions/#api-reference
     permission_classes = [permissions.IsAuthenticated]
 
 
@@ -62,9 +66,22 @@ class AccountViewSet(viewsets.ViewSet):
         """
         Check current login status 
         """
+        # <Wayne Shih> 21-Aug-2021
+        # 'django.contrib.auth.middleware.AuthenticationMiddleware' adds user attribute to request.
+        # - https://docs.djangoproject.com/en/3.2/ref/middleware/#django.contrib.auth.middleware.AuthenticationMiddleware
+        # - https://docs.djangoproject.com/en/3.2/ref/request-response/#attributes-set-by-middleware
+        # is_authenticated is an attribute available on any subclass of AbstractBaseUser.
+        # - https://docs.djangoproject.com/en/3.2/topics/auth/customizing/#django.contrib.auth.models.AbstractBaseUser
         data = {'has_logged_in': request.user.is_authenticated}
         if request.user.is_authenticated:
+            # <Wayne Shih> 21-Aug-2021
+            # - Add 'user' attribute to data.
+            # - UserSerializer converts request.user obj to json and store this converted json on its data attribute.
+            # - https://www.django-rest-framework.org/api-guide/serializers/#serializing-objects
             data['user'] = UserSerializer(request.user).data
+
+        # <Wayne Shih> 21-Aug-2021
+        # Response(data) converts data to json and return.
         return Response(data)
 
     # <Wayne Shih> 06-Aug-2021
@@ -89,13 +106,21 @@ class AccountViewSet(viewsets.ViewSet):
         """
         # <Wayne Shih> 07-Aug-2021
         # get username and password from request
+        # request.data returns the parsed content of the request body
+        # - https://www.django-rest-framework.org/api-guide/requests/#data
+        # Deserializing objects, validated_data, errors
+        # - https://www.django-rest-framework.org/api-guide/serializers/#deserializing-objects
+        # - https://www.django-rest-framework.org/api-guide/serializers/#validation
         serializer = LoginSerializer(data=request.data)
         if not serializer.is_valid():
+            # <Wayne Shih> 21-Aug-2021
+            # Responses Signature
+            # - https://www.django-rest-framework.org/api-guide/responses/#response
             return Response({
                 'success': False,
                 'message': 'Please check input.',
                 'errors': serializer.errors,
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         # <Wayne Shih> 07-Aug-2021
         # If validation is OK, then get user
@@ -112,18 +137,25 @@ class AccountViewSet(viewsets.ViewSet):
             return Response({
                 'success': False,
                 'message': 'User does not exit.'
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        # <Wayne Shih> 21-Aug-2021
+        # login user
+        # - https://docs.djangoproject.com/en/3.2/topics/auth/default/#how-to-log-a-user-in
         user = django_authenticate(username=username, password=password)
         if not user or user.is_anonymous:
             return Response({
                 'success': False,
                 'message': 'Username and password do not match.'
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         # <Wayne Shih> 07-Aug-2021
         # If user got, login
         django_login(request, user)
+
+        # <Wayne Shih> 21-Aug-2021
+        # _serializerObj.data is json
+        # - https://www.django-rest-framework.org/api-guide/serializers/#serializing-objects
         return Response({
             'success': True,
             'user': UserSerializer(user).data
@@ -142,14 +174,22 @@ class AccountViewSet(viewsets.ViewSet):
                 'success': False,
                 'message': 'Please check input.',
                 'errors': serializer.errors,
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         # <Wayne Shih> 07-Aug-2021
-        # If data got, create a new user and login
+        # If data got, create a new user and login.
+        # If we want to be able to return complete object instances based on the validated data,
+        # we need to implement one or both of .create() and .update() methods in serializer.
+        # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
+        # This new created user is authenticated.
         user = serializer.save()
+
+        # <Wayne Shih> 21-Aug-2021
+        # login user
+        # - https://docs.djangoproject.com/en/3.2/topics/auth/default/#how-to-log-a-user-in
         django_login(request, user)
         return Response({
             'success': True,
             'user': UserSerializer(user).data
-        }, status=201)
+        }, status=status.HTTP_201_CREATED)
 

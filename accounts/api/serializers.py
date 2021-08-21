@@ -12,6 +12,7 @@
 #    Date      Name                    Description of Change
 # 06-Aug-2021  Wayne Shih              Initial create
 # 07-Aug-2021  Wayne Shih              Add LoginSerializer and SignupSerializer
+# 21-Aug-2021  Wayne Shih              Modify SignupSerializer.validate and add some comments
 # $HISTORY$
 # =================================================================================================
 
@@ -20,6 +21,9 @@ from rest_framework import serializers, exceptions
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # <Wayne Shih> 21-Aug-2021
+    # Using ModelSerializers
+    # - https://www.django-rest-framework.org/tutorial/1-serialization/#using-modelserializers
     class Meta:
         model = User
         fields = ('username', 'email')
@@ -46,23 +50,25 @@ class SignupSerializer(serializers.ModelSerializer):
 
     # <Wayne Shih> 07-Aug-2021
     # Will be called when is_valid is called.
-    # Default validate() only checks if exact the same.
+    # - https://www.django-rest-framework.org/api-guide/serializers/#object-level-validation
+    # Default validate() only checks if name and type.
     # We overwrite this method to make it not case-sensitive.
     def validate(self, data):
         # TODO<HOMEWORK> 增加验证 username 是不是只由给定的字符集合构成
         if User.objects.filter(username=data['username'].lower()).exists():
             raise exceptions.ValidationError({
-                'message': 'This username has been occupied.'
+                'username': 'This username has been occupied.'
             })
         if User.objects.filter(email=data['email'].lower()).exists():
             raise exceptions.ValidationError({
-                'message': 'This email address has been occupied.'
+                'email': 'This email address has been occupied.'
             })
         return data
 
     # <Wayne Shih> 07-Aug-2021
     # Need to implement create() method, which is an abstract method.
     # Will be called save() is called.
+    # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
     # To create a user, underneath we save all lower cases for username and email
     # in order to make validation efficient.
     def create(self, validated_data):
@@ -72,7 +78,7 @@ class SignupSerializer(serializers.ModelSerializer):
 
         # <Wayne Shih> 07-Aug-2021
         # create_user() is a specific method of User model.
-        # It will underneath make 'true' password to a hash password
+        # It will underneath make 'true' password to a hashed password
         # In general cases, other models use create() to create new data
         user = User.objects.create_user(
             username=username,
