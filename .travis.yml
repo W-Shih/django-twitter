@@ -1,0 +1,42 @@
+# =================================================================================================
+#                                  All Rights Reserved.
+# =================================================================================================
+# File description:
+#       .travis.yml to set up CI
+#
+# =================================================================================================
+#    Date      Name                    Description of Change
+# 24-Aug-2021  Wayne Shih              Initial create
+# $HISTORY$
+# =================================================================================================
+
+language: python
+
+sudo: enabled
+
+python:
+  - "3.6"
+
+services:
+  - mysql
+
+# commands to install dependencies
+install:
+  - pip install -U pip
+  - pip install -r requirements.txt
+  - pip install django-debug-toolbar
+  - pip install coverage
+  - pip install codecov
+
+# command to set up eniroment
+before_script:
+  - sudo bash ./provision.sh
+
+# command to run tests
+script:
+  - coverage run --source='.' manage.py test && coverage report -m && coverage html
+
+# Push the results back to codecov
+after_success:
+  - codecov
+
