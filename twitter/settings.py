@@ -10,6 +10,7 @@
 # 06-Aug-2021  Wayne Shih              Add rest_framework, and pagination
 # 07-Aug-2021  Wayne Shih              Add account
 # 21-Aug-2021  Wayne Shih              Add django-debug-toolbar
+# 05-Sep-2021  Wayne Shih              Add tweets
 # $HISTORY$
 # =================================================================================================
 
@@ -67,6 +68,7 @@ INSTALLED_APPS = [
 
     # project apps
     'accounts',
+    'tweets',
 ]
 
 REST_FRAMEWORK = {
