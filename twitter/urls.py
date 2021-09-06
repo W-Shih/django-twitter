@@ -10,6 +10,7 @@
 # 06-Aug-2021  Wayne Shih              Initial create
 # 07-Aug-2021  Wayne Shih              Register router AccountViewSet
 # 21-Aug-2021  Wayne Shih              Add django-debug-toolbar
+# 06-Sep-2021  Wayne Shih              Register router TweetViewSet
 # $HISTORY$
 # =================================================================================================
 
@@ -33,14 +34,17 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
 from accounts.api.views import UserViewSet, AccountViewSet
+from tweets.api.views import TweetViewSet
 
 import debug_toolbar
+
 
 router = routers.DefaultRouter()
 router.register(r'api/users', UserViewSet)
 # <Wayne Shih> 06-Aug-2021
 # need to have basename just as url root name
 router.register(r'api/accounts', AccountViewSet, basename='accounts')
+router.register(r'api/tweets', TweetViewSet, basename='tweets')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
