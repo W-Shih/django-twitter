@@ -11,10 +11,9 @@
 # =================================================================================================
 
 
-from django.contrib.auth.models import User
-from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
+from testing.testcases import TestCase
 
 
 LOGIN_URL = '/api/accounts/login/'
@@ -48,12 +47,6 @@ class AccountApiTests(TestCase):
             email='fake_user@twitter.com',
             password='correct_password',
         )
-
-    def create_user(self, username, email, password):
-        # <Wayne Shih> 12-Aug-2021
-        # Don't use User.objects.create() to create users
-        # because password needs to be hashed, also username and email need to be normalized (e.g. trim).
-        return User.objects.create_user(username, email, password)
 
     # <Wayne Shih> 12-Aug-2021
     # The name of each test method must start with 'test_'.

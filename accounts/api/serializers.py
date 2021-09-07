@@ -2,6 +2,8 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
+#       - Serializer for accounts api
+#
 #       - Serializers allow complex data such as querysets and model instances to be converted to
 #         native Python datatypes that can then be easily rendered into JSON, XML or other content types.
 #       - Can be used as a validator to validate if request is valid
@@ -13,8 +15,10 @@
 # 06-Aug-2021  Wayne Shih              Initial create
 # 07-Aug-2021  Wayne Shih              Add LoginSerializer and SignupSerializer
 # 21-Aug-2021  Wayne Shih              Modify SignupSerializer.validate and add some comments
+# 06-Sep-2021  Wayne Shih              Add UserSerializerForTweet
 # $HISTORY$
 # =================================================================================================
+
 
 from django.contrib.auth.models import User
 from rest_framework import serializers, exceptions
@@ -27,6 +31,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email')
+
+
+class UserSerializerForTweet(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username')
+
 
 # <Wayne Shih> 07-Aug-2021
 # Ref: https://www.django-rest-framework.org/api-guide/serializers/#field-level-validatio
