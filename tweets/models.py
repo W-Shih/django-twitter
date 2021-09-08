@@ -2,7 +2,7 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
-#       Define Tweet model that maps to DB twitter_tweet table
+#       Define Tweet model that maps to DB tweets_tweet table
 #
 #       Ref:
 #         - https://docs.djangoproject.com/en/3.2/topics/db/models/
@@ -11,6 +11,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 30-Aug-2021  Wayne Shih              Initial create
+# 07-Sep-2021  Wayne Shih              Update __str__ format
 # $HISTORY$
 # =================================================================================================
 
@@ -28,9 +29,10 @@ class Tweet(models.Model):
         ordering = ('user_id', '-created_at')
 
     def __str__(self):
-        return 'Tweet -- {id} -- {user} -- {created_at} -- {content} --'.format(
+        return '-- Tweet-{id}: {user}-{user_id} -- {created_at} -- {content} --'.format(
             id=self.id,
             user=self.user,
+            user_id=self.user_id,
             created_at=self.created_at,
             content=self.content,
         )
