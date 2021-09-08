@@ -11,6 +11,7 @@
 # 07-Aug-2021  Wayne Shih              Add account
 # 21-Aug-2021  Wayne Shih              Add django-debug-toolbar
 # 05-Sep-2021  Wayne Shih              Add tweets
+# 07-Sep-2021  Wayne Shih              Add friendships
 # $HISTORY$
 # =================================================================================================
 
@@ -69,6 +70,7 @@ INSTALLED_APPS = [
     # project apps
     'accounts',
     'tweets',
+    'friendships',
 ]
 
 REST_FRAMEWORK = {
