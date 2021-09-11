@@ -11,6 +11,7 @@
 # 07-Aug-2021  Wayne Shih              Register router AccountViewSet
 # 21-Aug-2021  Wayne Shih              Add django-debug-toolbar
 # 06-Sep-2021  Wayne Shih              Register router TweetViewSet
+# 12-Sep-2021  Wayne Shih              Register router FriendshipViewSet
 # $HISTORY$
 # =================================================================================================
 
@@ -30,10 +31,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from accounts.api.views import UserViewSet, AccountViewSet
+from friendships.api.views import FriendshipViewSet
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
-from accounts.api.views import UserViewSet, AccountViewSet
 from tweets.api.views import TweetViewSet
 
 import debug_toolbar
@@ -45,6 +47,7 @@ router.register(r'api/users', UserViewSet)
 # need to have basename just as url root name
 router.register(r'api/accounts', AccountViewSet, basename='accounts')
 router.register(r'api/tweets', TweetViewSet, basename='tweets')
+router.register(r'api/friendships', FriendshipViewSet, basename='friendships')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
