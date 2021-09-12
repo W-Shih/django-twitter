@@ -16,6 +16,7 @@
 # 07-Aug-2021  Wayne Shih              Add LoginSerializer and SignupSerializer
 # 21-Aug-2021  Wayne Shih              Modify SignupSerializer.validate and add some comments
 # 06-Sep-2021  Wayne Shih              Add UserSerializerForTweet
+# 12-Sep-2021  Wayne Shih              Add UserSerializerForFriendship
 # $HISTORY$
 # =================================================================================================
 
@@ -37,6 +38,10 @@ class UserSerializerForTweet(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username')
+
+
+class UserSerializerForFriendship(UserSerializerForTweet):
+    pass
 
 
 # <Wayne Shih> 07-Aug-2021
