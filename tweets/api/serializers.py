@@ -5,7 +5,8 @@
 #       - Serializer for tweets api
 #
 #       - Serializers allow complex data such as querysets and model instances to be converted to
-#         native Python datatypes that can then be easily rendered into JSON, XML or other content types.
+#         native Python datatypes that can then be easily rendered into JSON, XML or other content
+#         types.
 #       - Can be used as a validator to validate if request is valid
 #
 #       Ref: https://www.django-rest-framework.org/api-guide/serializers/
@@ -13,12 +14,14 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 06-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
-from accounts.api.serializers import UserSerializerForTweet
 from rest_framework import serializers
+
+from accounts.api.serializers import UserSerializerForTweet
 from tweets.models import Tweet
 
 
@@ -44,4 +47,3 @@ class TweetSerializerForCreate(serializers.ModelSerializer):
         content = validated_data['content']
         tweet = Tweet.objects.create(user_id=user_id, content=content)
         return tweet
-

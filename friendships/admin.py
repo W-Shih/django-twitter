@@ -7,11 +7,13 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 07-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib import admin
+
 from friendships.models import Friendship
 
 
@@ -24,4 +26,3 @@ class FriendshipAdmin(admin.ModelAdmin):
         'to_user',
         'created_at',
     )
-

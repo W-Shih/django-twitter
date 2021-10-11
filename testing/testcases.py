@@ -9,12 +9,14 @@
 #    Date      Name                    Description of Change
 # 06-Sep-2021  Wayne Shih              Initial create: Refactor TestCase
 # 07-Sep-2021  Wayne Shih              Correct comments
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
 from django.test import TestCase as DjangoTestCase
 from django.contrib.auth.models import User
+
 from tweets.models import Tweet
 
 
@@ -37,4 +39,3 @@ class TestCase(DjangoTestCase):
             content = 'Default content -- Welcome to Django-Twitter'
 
         return Tweet.objects.create(user=user, content=content)
-

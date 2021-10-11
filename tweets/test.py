@@ -8,10 +8,13 @@
 #    Date      Name                    Description of Change
 # 05-Sep-2021  Wayne Shih              Initial create
 # 07-Sep-2021  Wayne Shih              React to refactoring TestCase
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
+
 from datetime import date, timedelta
+
 from testing.testcases import TestCase
 from tweets.models import Tweet
 from utils.time_helpers import utc_now

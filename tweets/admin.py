@@ -7,11 +7,15 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 05-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
+
 from django.contrib import admin
+
 from tweets.models import Tweet
+
 
 @admin.register(Tweet)
 class TweetAdmin(admin.ModelAdmin):
