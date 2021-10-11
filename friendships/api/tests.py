@@ -7,13 +7,15 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 09-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
-from friendships.models import Friendship
 from rest_framework import status
 from rest_framework.test import APIClient
+
+from friendships.models import Friendship
 from testing.testcases import TestCase
 
 
@@ -38,11 +40,11 @@ class FriendshipApiTests(TestCase):
         self.mj23_client.force_authenticate(self.mj23)
 
         for i in range(2):
-            follower = self.create_user(username='lbj23_follower{}'.format(i))
+            follower = self.create_user(username=f'lbj23_follower{i}')
             Friendship.objects.create(from_user=follower, to_user=self.lbj23)
 
         for i in range(3):
-            following = self.create_user(username='lbj23_following{}'.format(i))
+            following = self.create_user(username=f'lbj23_following{i}')
             Friendship.objects.create(from_user=self.lbj23, to_user=following)
 
     def test_drf_api_page(self):
@@ -103,7 +105,7 @@ class FriendshipApiTests(TestCase):
         for i in range(len(followings)):
             self.assertEqual(
                 followings[i]['user']['username'],
-                'lbj23_following{}'.format(len(followings) - 1 - i)
+                f'lbj23_following{len(followings) - 1 - i}'
             )
 
     def test_follow(self):

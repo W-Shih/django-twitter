@@ -14,13 +14,15 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 08-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
+from rest_framework import serializers
+
 from accounts.api.serializers import UserSerializerForFriendship
 from friendships.models import Friendship
-from rest_framework import serializers
 
 
 class FollowerSerializer(serializers.ModelSerializer):
@@ -64,4 +66,3 @@ class FriendshipSerializerForCreate(serializers.ModelSerializer):
             to_user_id=validated_data['to_user_id'],
         )
         return friendship
-

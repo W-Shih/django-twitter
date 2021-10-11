@@ -12,6 +12,7 @@
 # 21-Aug-2021  Wayne Shih              Add django-debug-toolbar
 # 06-Sep-2021  Wayne Shih              Register router TweetViewSet
 # 12-Sep-2021  Wayne Shih              Register router FriendshipViewSet
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
@@ -31,14 +32,15 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from accounts.api.views import UserViewSet, AccountViewSet
-from friendships.api.views import FriendshipViewSet
+import debug_toolbar
+
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
-from tweets.api.views import TweetViewSet
 
-import debug_toolbar
+from accounts.api.views import AccountViewSet, UserViewSet
+from friendships.api.views import FriendshipViewSet
+from tweets.api.views import TweetViewSet
 
 
 router = routers.DefaultRouter()
