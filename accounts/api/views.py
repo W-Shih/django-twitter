@@ -2,7 +2,7 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
-#       In other frameworks you may also find conceptually similar implementations named 
+#       In other frameworks you may also find conceptually similar implementations named
 #       something like 'Resources' or 'Controllers'.
 #
 #       Ref: https://www.django-rest-framework.org/api-guide/viewsets/
@@ -10,9 +10,10 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 06-Aug-2021  Wayne Shih              Initial create
-# 07-Aug-2021  Wayne Shih              Add AccountViewSet 
+# 07-Aug-2021  Wayne Shih              Add AccountViewSet
 # 21-Aug-2021  Wayne Shih              Use rest_framework.status instead and add some comments
 # 21-Aug-2021  Wayne Shih              Add ip information in login_status for django-debug-toolbar
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
@@ -65,7 +66,7 @@ class AccountViewSet(viewsets.ViewSet):
     @action(methods=['GET'], detail=False)
     def login_status(self, request):
         """
-        Check current login status 
+        Check current login status
         """
         # <Wayne Shih> 21-Aug-2021
         # 'django.contrib.auth.middleware.AuthenticationMiddleware' adds user attribute to request.
@@ -80,7 +81,8 @@ class AccountViewSet(viewsets.ViewSet):
         if request.user.is_authenticated:
             # <Wayne Shih> 21-Aug-2021
             # - Add 'user' attribute to data.
-            # - UserSerializer converts request.user obj to json and store this converted json on its data attribute.
+            # - UserSerializer converts request.user obj to json and store this converted json on
+            #   its data attribute.
             # - https://www.django-rest-framework.org/api-guide/serializers/#serializing-objects
             data['user'] = UserSerializer(request.user).data
 

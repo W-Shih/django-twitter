@@ -5,7 +5,8 @@
 #       - Serializer for accounts api
 #
 #       - Serializers allow complex data such as querysets and model instances to be converted to
-#         native Python datatypes that can then be easily rendered into JSON, XML or other content types.
+#         native Python datatypes that can then be easily rendered into JSON, XML or other content
+#         types.
 #       - Can be used as a validator to validate if request is valid
 #
 #       Ref: https://www.django-rest-framework.org/api-guide/serializers/
@@ -17,12 +18,13 @@
 # 21-Aug-2021  Wayne Shih              Modify SignupSerializer.validate and add some comments
 # 06-Sep-2021  Wayne Shih              Add UserSerializerForTweet
 # 12-Sep-2021  Wayne Shih              Add UserSerializerForFriendship
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
-from rest_framework import serializers, exceptions
+from rest_framework import exceptions, serializers
 
 
 class UserSerializer(serializers.ModelSerializer):

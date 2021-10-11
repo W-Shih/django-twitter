@@ -12,6 +12,7 @@
 # 21-Aug-2021  Wayne Shih              Add django-debug-toolbar
 # 05-Sep-2021  Wayne Shih              Add tweets
 # 07-Sep-2021  Wayne Shih              Add friendships
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
@@ -32,7 +33,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -42,15 +42,15 @@ SECRET_KEY = 'u7#94#6$fb7-d9+$oo&^grrvtm7%u30(l*q-fyzwmvoouj7=)_'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# <Wayne Shih> 21-Aug-2021 
+# <Wayne Shih> 21-Aug-2021
 # Add white list, it can be domain name too.
 # These are virtual machine's ip in host machine world.
-ALLOWED_HOSTS = [ '127.0.0.1' , '192.168.33.10' , 'localhost' ]
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.33.10', 'localhost']
 
 # <Wayne Shih> 21-Aug-2021
 # Add host machine's ip in virtual machine to white list.
 # These are host machine's ip in host virtual world.
-INTERNAL_IPS = [ '10.0.2.2' , ]
+INTERNAL_IPS = ['10.0.2.2', ]
 
 # Application definition
 
@@ -109,23 +109,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'twitter.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-# <Wayne Shih> 05-Aug-2021 
+# <Wayne Shih> 05-Aug-2021
 # Update to our mysql config
 DATABASES = {
-    'default' : {
-        'ENGINE' : 'django.db.backends.mysql' ,
-        'NAME' : 'twitter' ,
-        'HOST' : '0.0.0.0' ,
-        'PORT' : '3306' ,
-        'USER' : 'root' ,
-        'PASSWORD' : 'yourpassword' , # 这⾥是⾃⼰下载mysql时候输⼊两次的那个密码
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'twitter',
+        'HOST': '0.0.0.0',
+        'PORT': '3306',
+        'USER': 'root',
+        'PASSWORD': 'yourpassword',  # 这⾥是⾃⼰下载mysql时候输⼊两次的那个密码
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -145,7 +143,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
@@ -158,7 +155,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/

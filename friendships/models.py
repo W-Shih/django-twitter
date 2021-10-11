@@ -11,6 +11,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 07-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
@@ -79,4 +80,3 @@ class Friendship(models.Model):
             to_user_id=self.to_user_id,
             created_at=self.created_at,
         )
-

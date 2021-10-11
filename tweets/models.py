@@ -12,12 +12,16 @@
 #    Date      Name                    Description of Change
 # 30-Aug-2021  Wayne Shih              Initial create
 # 07-Sep-2021  Wayne Shih              Update __str__ format
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
+
 from django.contrib.auth.models import User
 from django.db import models
+
 from utils.time_helpers import utc_now
+
 
 class Tweet(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)

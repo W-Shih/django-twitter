@@ -7,12 +7,14 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 06-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
 from rest_framework import status
 from rest_framework.test import APIClient
+
 from testing.testcases import TestCase
 from tweets.models import Tweet
 
@@ -115,5 +117,3 @@ class TweetApiTests(TestCase):
             list(response.data.keys()),
             ['id', 'user', 'created_at', 'content']
         )
-
-

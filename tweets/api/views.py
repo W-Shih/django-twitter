@@ -2,7 +2,7 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
-#       In other frameworks you may also find conceptually similar implementations named 
+#       In other frameworks you may also find conceptually similar implementations named
 #       something like 'Resources' or 'Controllers'.
 #
 #       Ref: https://www.django-rest-framework.org/api-guide/viewsets/
@@ -10,6 +10,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 06-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
@@ -18,6 +19,7 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
+
 from tweets.api.serializers import TweetSerializer, TweetSerializerForCreate
 from tweets.models import Tweet
 
@@ -71,4 +73,3 @@ class TweetViewSet(viewsets.GenericViewSet):
         # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
         tweet = serializer.save()
         return Response(TweetSerializer(tweet).data, status=status.HTTP_201_CREATED)
-

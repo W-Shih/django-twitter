@@ -7,13 +7,13 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 07-Sep-2021  Wayne Shih              Initial create
+# 10-Oct-2021  Wayne Shih              React to pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
 from testing.testcases import TestCase
 from friendships.models import Friendship
-
 import re
 
 
@@ -59,7 +59,7 @@ class FriendshipTest(TestCase):
         self.assertEqual(len(Friendship._meta.index_together), 2)
         self.assertEqual(len(Friendship._meta.unique_together), 1)
 
-        for item in Friendship._meta.index_together:
+        for _ in Friendship._meta.index_together:
             self.assertEqual(
                 bool(re.search('from_user(.*?)created_at', str(Friendship._meta.index_together)))
                 or
