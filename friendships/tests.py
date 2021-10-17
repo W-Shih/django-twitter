@@ -8,13 +8,15 @@
 #    Date      Name                    Description of Change
 # 07-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 17-Oct-2021  Wayne Shih              Fix pylint checks
 # $HISTORY$
 # =================================================================================================
 
 
+import re
+
 from testing.testcases import TestCase
 from friendships.models import Friendship
-import re
 
 
 class FriendshipTest(TestCase):
