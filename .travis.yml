@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 24-Aug-2021  Wayne Shih              Initial create
+# 17-Oct-2021  Wayne Shih              Add codacy
 # $HISTORY$
 # =================================================================================================
 
@@ -28,15 +29,17 @@ install:
   - pip install coverage
   - pip install codecov
 
-# command to set up eniroment
+# command to set up environment
 before_script:
   - sudo bash ./provision.sh
+  - export CODACY_PROJECT_TOKEN=a7b57e9b842647d29d7e144d2a906345
 
 # command to run tests
 script:
-  - coverage run --source='.' manage.py test && coverage report -m && coverage html
+  - coverage run --source='.' manage.py test && coverage report -m && coverage html && coverage xml
 
 # Push the results back to codecov
 after_success:
   - codecov
+  - bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
 
