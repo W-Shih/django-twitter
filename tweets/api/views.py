@@ -11,6 +11,7 @@
 #    Date      Name                    Description of Change
 # 06-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 18-Oct-2021  Wayne Shih              Add newsfeeds fanout to followers
 # $HISTORY$
 # =================================================================================================
 
@@ -20,6 +21,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from newsfeeds.services import NewsFeedService
 from tweets.api.serializers import TweetSerializer, TweetSerializerForCreate
 from tweets.models import Tweet
 
@@ -72,4 +74,5 @@ class TweetViewSet(viewsets.GenericViewSet):
         # <Wayne Shih> 06-Sep-2021
         # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
         tweet = serializer.save()
+        NewsFeedService.fanout_to_followers(tweet)
         return Response(TweetSerializer(tweet).data, status=status.HTTP_201_CREATED)
