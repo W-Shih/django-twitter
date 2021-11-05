@@ -13,6 +13,7 @@
 # 06-Sep-2021  Wayne Shih              Register router TweetViewSet
 # 12-Sep-2021  Wayne Shih              Register router FriendshipViewSet
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 04-Nov-2021  Wayne Shih              Register router NewsFeedViewSet
 # $HISTORY$
 # =================================================================================================
 
@@ -40,6 +41,7 @@ from rest_framework import routers
 
 from accounts.api.views import AccountViewSet, UserViewSet
 from friendships.api.views import FriendshipViewSet
+from newsfeeds.api.views import NewsFeedViewSet
 from tweets.api.views import TweetViewSet
 
 
@@ -50,6 +52,7 @@ router.register(r'api/users', UserViewSet)
 router.register(r'api/accounts', AccountViewSet, basename='accounts')
 router.register(r'api/tweets', TweetViewSet, basename='tweets')
 router.register(r'api/friendships', FriendshipViewSet, basename='friendships')
+router.register(r'api/newsfeeds', NewsFeedViewSet, basename='newsfeeds')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

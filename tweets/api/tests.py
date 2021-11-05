@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 06-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 04-Nov-2021  Wayne Shih              React to adding anonymous_client to base class
 # $HISTORY$
 # =================================================================================================
 
@@ -28,8 +29,6 @@ class TweetApiTests(TestCase):
     # <Wayne Shih> 06-Sep-2021
     # This method will be executed before executing each test method
     def setUp(self):
-        self.anonymous_client = APIClient()
-
         self.user1 = self.create_user(username='lbj23')
         self.tweets1 = [
             self.create_tweet(self.user1)
