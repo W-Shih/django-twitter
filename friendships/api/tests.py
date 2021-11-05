@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 09-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 04-Nov-2021  Wayne Shih              React to adding anonymous_client to base class
 # $HISTORY$
 # =================================================================================================
 
@@ -29,8 +30,6 @@ UNFOLLOW_URL = '/api/friendships/{}/unfollow/'
 class FriendshipApiTests(TestCase):
 
     def setUp(self):
-        self.anonymous_client = APIClient()
-
         self.lbj23 = self.create_user(username='lbj23')
         self.lbj23_client = APIClient()
         self.lbj23_client.force_authenticate(self.lbj23)
