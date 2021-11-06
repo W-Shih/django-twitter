@@ -5,6 +5,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 17-Oct-2021  Wayne Shih              Initial create
+# 05-Nov-2021  Wayne Shih              Fix typo
 # $HISTORY$
 # =================================================================================================
 
@@ -52,7 +53,7 @@ class NewsfeedTest(TestCase):
 
         self.assertEqual(NewsFeed._meta.ordering, ('user', '-created_at',))
 
-    def test_comment_on_delete(self):
+    def test_newsfeed_on_delete(self):
         self.user.delete()
         self.assertEqual(NewsFeed.objects.first().user, None)
         self.tweet.delete()
@@ -78,9 +79,9 @@ class NewsfeedTest(TestCase):
             True
         )
 
-        message = '-- {created_at} inbox of {user}: {tweet} --'.format(
+        message = '-- {created_at} inbox of {user}: {tweet} --'
+        self.assertEqual(message.format(
             created_at=self.newsfeed.created_at,
             user=self.newsfeed.user,
             tweet=self.newsfeed.tweet,
-        )
-        self.assertEqual(message, str(self.newsfeed))
+        ), str(self.newsfeed))
