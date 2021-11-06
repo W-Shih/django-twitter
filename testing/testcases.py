@@ -11,14 +11,16 @@
 # 07-Sep-2021  Wayne Shih              Correct comments
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 04-Nov-2021  Wayne Shih              Add anonymous_client
+# 04-Nov-2021  Wayne Shih              Add create_comment
 # $HISTORY$
 # =================================================================================================
 
 
-from django.test import TestCase as DjangoTestCase
 from django.contrib.auth.models import User
+from django.test import TestCase as DjangoTestCase
 from rest_framework.test import APIClient
 
+from comments.models import Comment
 from tweets.models import Tweet
 
 
@@ -45,5 +47,9 @@ class TestCase(DjangoTestCase):
     def create_tweet(self, user, content=None):
         if content is None:
             content = 'Default content -- Welcome to Django-Twitter'
-
         return Tweet.objects.create(user=user, content=content)
+
+    def create_comment(self, user, tweet, content=None):
+        if content is None:
+            content = 'Default content -- Welcome to Django-Twitter'
+        return Comment.objects.create(user=user, tweet=tweet, content=content)

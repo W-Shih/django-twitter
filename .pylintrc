@@ -10,6 +10,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 10-Oct-2021  Wayne Shih              Initial create and modify as own needs
+# 05-Nov-2021  Wayne Shih              Add manage.py to ignore
 # $HISTORY$
 # =================================================================================================
 
@@ -17,7 +18,8 @@
 
 # Files or directories to be skipped. They should be base names, not paths.
 ignore=third_party,
-       migrations
+       migrations,
+       manage.py
 
 # Files or directories matching the regex patterns are skipped. The regex
 # matches against base names, not paths.

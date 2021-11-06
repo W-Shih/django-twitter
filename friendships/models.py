@@ -2,16 +2,17 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
-#       Define Friendship model that maps to DB friendships_friendship table
+#   Define Friendship model that maps to DB friendships_friendship table
 #
-#       Ref:
-#         - https://docs.djangoproject.com/en/3.2/topics/db/models/
-#         - https://www.django-rest-framework.org/tutorial/1-serialization/#creating-a-model-to-work-with
+#   Ref:
+#    - https://docs.djangoproject.com/en/3.2/topics/db/models/
+#    - https://www.django-rest-framework.org/tutorial/1-serialization/#creating-a-model-to-work-with
 #
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 07-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 05-Nov-2021  Wayne Shih              Fix pylint checks
 # $HISTORY$
 # =================================================================================================
 

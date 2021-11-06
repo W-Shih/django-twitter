@@ -14,6 +14,7 @@
 # 07-Sep-2021  Wayne Shih              Add friendships
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 17-Oct-2021  Wayne Shih              Add newsfeeds
+# 05-Nov-2021  Wayne Shih              Add comments
 # $HISTORY$
 # =================================================================================================
 
@@ -72,7 +73,8 @@ INSTALLED_APPS = [
     'accounts',
     'tweets',
     'friendships',
-    'newsfeeds'
+    'newsfeeds',
+    'comments'
 ]
 
 REST_FRAMEWORK = {

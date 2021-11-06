@@ -19,6 +19,7 @@
 # 06-Sep-2021  Wayne Shih              Add UserSerializerForTweet
 # 12-Sep-2021  Wayne Shih              Add UserSerializerForFriendship
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 05-Nov-2021  Wayne Shih              Update TODO
 # $HISTORY$
 # =================================================================================================
 
@@ -72,7 +73,9 @@ class SignupSerializer(serializers.ModelSerializer):
     # Default validate() only checks if name and type.
     # We overwrite this method to make it not case-sensitive.
     def validate(self, data):
-        # TODO<HOMEWORK> 增加验证 username 是不是只由给定的字符集合构成
+        # <Wayne Shih> 05-Nov-2021
+        # TODO:
+        #   Add checking if username only includes certain given chars
         if User.objects.filter(username=data['username'].lower()).exists():
             raise exceptions.ValidationError({
                 'username': 'This username has been occupied.'
