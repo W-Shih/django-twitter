@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 24-Aug-2021  Wayne Shih              Initial create
 # 17-Oct-2021  Wayne Shih              Add codacy
+# 05-Nov-2021  Wayne Shih              Turn off curl's verification of the certificate by -k option
 # $HISTORY$
 # =================================================================================================
 
@@ -41,5 +42,4 @@ script:
 # Push the results back to codecov
 after_success:
   - codecov
-  - bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
-
+  - bash <(curl -Lsk https://coverage.codacy.com/get.sh) report -r coverage.xml
