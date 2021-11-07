@@ -20,6 +20,7 @@
 # 12-Sep-2021  Wayne Shih              Add UserSerializerForFriendship
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 05-Nov-2021  Wayne Shih              Update TODO
+# 06-Nov-2021  Wayne Shih              Add UserSerializerForComment
 # $HISTORY$
 # =================================================================================================
 
@@ -37,13 +38,21 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'email')
 
 
-class UserSerializerForTweet(serializers.ModelSerializer):
+class BaseUserSerializerForDisplay(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username')
 
 
-class UserSerializerForFriendship(UserSerializerForTweet):
+class UserSerializerForTweet(BaseUserSerializerForDisplay):
+    pass
+
+
+class UserSerializerForFriendship(BaseUserSerializerForDisplay):
+    pass
+
+
+class UserSerializerForComment(BaseUserSerializerForDisplay):
     pass
 
 

@@ -15,6 +15,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 17-Oct-2021  Wayne Shih              Add newsfeeds
 # 05-Nov-2021  Wayne Shih              Add comments
+# 06-Nov-2021  Wayne Shih              Add local_settings
 # $HISTORY$
 # =================================================================================================
 
@@ -164,3 +165,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+try:
+    from .local_settings import *
+except:
+    pass

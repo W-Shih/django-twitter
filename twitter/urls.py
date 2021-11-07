@@ -14,6 +14,7 @@
 # 12-Sep-2021  Wayne Shih              Register router FriendshipViewSet
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 04-Nov-2021  Wayne Shih              Register router NewsFeedViewSet
+# 06-Nov-2021  Wayne Shih              Register router CommentViewSet
 # $HISTORY$
 # =================================================================================================
 
@@ -40,6 +41,7 @@ from django.urls import include, path
 from rest_framework import routers
 
 from accounts.api.views import AccountViewSet, UserViewSet
+from comments.api.views import CommentViewSet
 from friendships.api.views import FriendshipViewSet
 from newsfeeds.api.views import NewsFeedViewSet
 from tweets.api.views import TweetViewSet
@@ -53,6 +55,7 @@ router.register(r'api/accounts', AccountViewSet, basename='accounts')
 router.register(r'api/tweets', TweetViewSet, basename='tweets')
 router.register(r'api/friendships', FriendshipViewSet, basename='friendships')
 router.register(r'api/newsfeeds', NewsFeedViewSet, basename='newsfeeds')
+router.register(r'api/comments', CommentViewSet, basename='comments')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
