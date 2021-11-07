@@ -9,6 +9,7 @@
 # 06-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 04-Nov-2021  Wayne Shih              React to adding anonymous_client to base class
+# 06-Nov-2021  Wayne Shih              Modify some assertEqual to check set instead of list
 # $HISTORY$
 # =================================================================================================
 
@@ -56,8 +57,8 @@ class TweetApiTests(TestCase):
         self.assertEqual(isinstance(tweets, list), True)
         self.assertEqual(len(tweets), 3)
         self.assertEqual(
-            list(tweets[0].keys()),
-            ['id', 'user', 'created_at', 'content']
+            set(tweets[0].keys()),
+            {'id', 'user', 'created_at', 'content'}
         )
         # <Wayne Shih> 06-Sep-2021
         # test order by '-created_at'
@@ -113,6 +114,6 @@ class TweetApiTests(TestCase):
             'username': self.user1.username,
         })
         self.assertEqual(
-            list(response.data.keys()),
-            ['id', 'user', 'created_at', 'content']
+            set(response.data.keys()),
+            {'id', 'user', 'created_at', 'content'}
         )

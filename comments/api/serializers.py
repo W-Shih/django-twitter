@@ -45,15 +45,16 @@ class CommentSerializerForCreate(serializers.ModelSerializer):
     def validate(self, data):
         if not Tweet.objects.filter(id=data['tweet_id']).exists():
             raise serializers.ValidationError({
-                'message': 'tweet does not exist.'
+                'tweet_id': 'tweet does not exist.'
             })
         return data
 
     # <Wayne Shih> 06-Nov-2021
     # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
     def create(self, validated_data):
-        user_id = validated_data['user_id']
-        tweet_id = validated_data['tweet_id']
-        content = validated_data['content']
-        comment = Comment.objects.create(user_id=user_id, tweet_id=tweet_id, content=content)
+        comment = Comment.objects.create(
+            user_id=validated_data['user_id'],
+            tweet_id=validated_data['tweet_id'],
+            content=validated_data['content']
+        )
         return comment

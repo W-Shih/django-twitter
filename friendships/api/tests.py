@@ -9,6 +9,7 @@
 # 09-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 04-Nov-2021  Wayne Shih              React to adding anonymous_client to base class
+# 06-Nov-2021  Wayne Shih              Modify some assertEqual to check set instead of list
 # $HISTORY$
 # =================================================================================================
 
@@ -65,8 +66,8 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(isinstance(followers, list), True)
         self.assertEqual(len(followers), 2)
-        self.assertEqual(list(followers[0].keys()), ['from_user', 'created_at'])
-        self.assertEqual(list(followers[0].get('from_user')), ['id', 'username'])
+        self.assertEqual(set(followers[0].keys()), {'from_user', 'created_at'})
+        self.assertEqual(set(followers[0].get('from_user')), {'id', 'username'})
         # <Wayne Shih> 06-Sep-2021
         # test order by '-created_at'
         for i in range(len(followers) - 1):
@@ -92,8 +93,8 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(isinstance(followings, list), True)
         self.assertEqual(len(followings), 3)
-        self.assertEqual(list(followings[0].keys()), ['user', 'created_at'])
-        self.assertEqual(list(followings[0].get('user')), ['id', 'username'])
+        self.assertEqual(set(followings[0].keys()), {'user', 'created_at'})
+        self.assertEqual(set(followings[0].get('user')), {'id', 'username'})
         # <Wayne Shih> 06-Sep-2021
         # test order by '-created_at'
         for i in range(len(followings) - 1):
@@ -130,10 +131,10 @@ class FriendshipApiTests(TestCase):
         response = self.lbj23_client.post(url)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Friendship.objects.count(), count + 1)
-        self.assertEqual(list(response.data.keys()), ['success', 'following'])
+        self.assertEqual(set(response.data.keys()), {'success', 'following'})
         self.assertEqual(
-            list(response.data['following'].keys()),
-            ['user', 'created_at']
+            set(response.data['following'].keys()),
+            {'user', 'created_at'}
         )
         self.assertEqual(response.data['following']['user']['id'], self.mj23.id)
 
