@@ -34,12 +34,13 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializerForCreate(serializers.ModelSerializer):
+    user_id = serializers.IntegerField()
     tweet_id = serializers.IntegerField()
     content = serializers.CharField(max_length=140)
 
     class Meta:
         model = Comment
-        fields = ('tweet_id', 'content',)
+        fields = ('user_id', 'tweet_id', 'content',)
 
     def validate(self, data):
         if not Tweet.objects.filter(id=data['tweet_id']).exists():
@@ -51,7 +52,7 @@ class CommentSerializerForCreate(serializers.ModelSerializer):
     # <Wayne Shih> 06-Nov-2021
     # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
     def create(self, validated_data):
-        user_id = self.context['request'].user.id
+        user_id = validated_data['user_id']
         tweet_id = validated_data['tweet_id']
         content = validated_data['content']
         comment = Comment.objects.create(user_id=user_id, tweet_id=tweet_id, content=content)

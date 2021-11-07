@@ -30,7 +30,12 @@ class CommentViewSet(viewsets.GenericViewSet):
     # URL:
     # - POST /api/comments/
     def create(self, request: Request):
-        serializer = CommentSerializerForCreate(data=request.data, context={'request': request})
+        data = {
+            'user_id': request.user.id,
+            'tweet_id': request.data.get('tweet_id'),
+            'content': request.data.get('content'),
+        }
+        serializer = CommentSerializerForCreate(data=data)
         if not serializer.is_valid():
             return Response({
                 'success': False,
