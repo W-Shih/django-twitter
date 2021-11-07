@@ -9,6 +9,7 @@
 # 24-Aug-2021  Wayne Shih              Initial create
 # 17-Oct-2021  Wayne Shih              Add codacy
 # 05-Nov-2021  Wayne Shih              Turn off curl's verification of the certificate by -k option
+# 06-Nov-2021  Wayne Shih              Add pylint
 # $HISTORY$
 # =================================================================================================
 
@@ -29,15 +30,17 @@ install:
   - pip install django-debug-toolbar
   - pip install coverage
   - pip install codecov
+  - pip install pylint
 
 # command to set up environment
 before_script:
   - sudo bash ./provision.sh
   - export CODACY_PROJECT_TOKEN=a7b57e9b842647d29d7e144d2a906345
 
-# command to run tests
+# command to run tests and pylint
 script:
   - coverage run --source='.' manage.py test && coverage report -m && coverage html && coverage xml
+  - touch __init__.py; pylint $(pwd); rm __init__.py
 
 # Push the results back to codecov
 after_success:
