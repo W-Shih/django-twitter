@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 05-Nov-2021  Wayne Shih              Initial create
+# 13-Nov-2021  Wayne Shih              Add id
 # $HISTORY$
 # =================================================================================================
 
@@ -20,6 +21,7 @@ from comments.models import Comment
 class CommentAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     list_display = (
+        'id',
         'user',
         'tweet',
         'content',

@@ -10,6 +10,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 04-Nov-2021  Wayne Shih              React to adding anonymous_client to base class
 # 06-Nov-2021  Wayne Shih              Modify some assertEqual to check set instead of list
+# 13-Nov-2021  Wayne Shih              Update non_existing_user_id larger to Fix test fail
 # $HISTORY$
 # =================================================================================================
 
@@ -79,7 +80,10 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(followers[1]['from_user']['username'], 'lbj23_follower0')
 
     def test_followings(self):
-        non_existing_user_id = 50
+        # <Wayne Shih> 13-Nov-2021
+        # As number of tests increase, so does user_id in DB.
+        # Therefor, update non_existing_user_id larger to Fix test fail.
+        non_existing_user_id = 10000
         url = FOLLOWINGS_URL.format(non_existing_user_id)
         response = self.anonymous_client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

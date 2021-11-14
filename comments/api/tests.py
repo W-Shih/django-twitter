@@ -7,18 +7,22 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 06-Nov-2021  Wayne Shih              Initial create
+# 13-Nov-2021  Wayne Shih              Add tests for comments update and destroy apis
 # $HISTORY$
 # =================================================================================================
 
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from comments.models import Comment
 from testing.testcases import TestCase
 
 # <Wayne Shih> 06-Nov-2021
 # URL MUST end with '/', OW, status_code will become 301
 COMMENT_CREATE_URL = '/api/comments/'
+COMMENT_DETAIL_URL = '/api/comments/{}/'
 
 
 class CommentApiTests(TestCase):
@@ -110,3 +114,113 @@ class CommentApiTests(TestCase):
             response.data['errors']['tweet_id'][0],
             'tweet does not exist.'
         )
+
+    def test_update_api(self):
+        comment = self.create_comment(self.lbj23, self.tweet, 'GOAT!')
+        url = COMMENT_DETAIL_URL.format(comment.id)
+
+        # Non-login users
+        # <Wayne Shih> 13-Nov-2021
+        # TODO:
+        #   This check might be not not suitable when retrieve api is considered.
+        response = self.anonymous_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        response = self.anonymous_client.put(url, {'content': 'dummy comment'})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Not PUT method
+        # <Wayne Shih> 13-Nov-2021
+        # TODO:
+        #   This check might be not not suitable when retrieve api is considered.
+        response = self.kd35_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Not comment owner
+        response = self.kd35_client.put(url, {'content': 'dummy comment'})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Comment owner, but not passing 'content'
+        self.lbj23_client.force_authenticate(self.lbj23)
+        response = self.lbj23_client.put(url, {'foo_key': 'foo_value'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors']['content'][0],
+            'This field may not be null.'
+        )
+
+        # Comment owner, update comment successfully
+        # <Wayne Shih> 13-Nov-2021
+        # Make sure comment object is the latest from db, not from cache
+        comment.refresh_from_db()
+        new_comment = 'I am chasing the GOAT!'
+        self.assertNotEqual(comment.content, new_comment)
+        old_comment_id = comment.id
+        old_updated_at = comment.updated_at
+        old_created_at = comment.created_at
+
+        now = timezone.now()
+        another_tweet = self.create_tweet(self.kd35)
+        # <Wayne Shih> 13-Nov-2021
+        # The update api only allows to update 'content' field as a white list.
+        # Test if try to update fields other than 'content'.
+        response = self.lbj23_client.put(url, {
+            'content': new_comment,
+            'user_id': self.kd35.id,
+            'tweet_id': another_tweet.id,
+            'created_at': now,
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            set(response.data.keys()),
+            {'id', 'tweet_id', 'user', 'created_at', 'content'}
+        )
+        # <Wayne Shih> 13-Nov-2021
+        # Make sure comment object is the latest from db, not from cache
+        comment.refresh_from_db()
+        self.assertEqual(response.data['id'], old_comment_id)
+        self.assertEqual(response.data['tweet_id'], self.tweet.id)
+        self.assertEqual(response.data['user'], {
+            'id': self.lbj23.id,
+            'username': self.lbj23.username,
+        })
+        self.assertEqual(response.data['content'], new_comment)
+        self.assertEqual(comment.created_at, old_created_at)
+        self.assertNotEqual(comment.created_at, now)
+        self.assertNotEqual(comment.updated_at, old_updated_at)
+
+    def test_delete_api(self):
+        comment = self.create_comment(self.lbj23, self.tweet, 'GOAT!')
+        url = COMMENT_DETAIL_URL.format(comment.id)
+
+        # Non-login users
+        # <Wayne Shih> 13-Nov-2021
+        # TODO:
+        #   This check might be not not suitable when retrieve api is considered.
+        response = self.anonymous_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        response = self.anonymous_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Not DELETE method
+        # <Wayne Shih> 13-Nov-2021
+        # TODO:
+        #   This check might be not not suitable when retrieve api is considered.
+        response = self.kd35_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Not comment owner
+        response = self.kd35_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Comment owner
+        count = Comment.objects.count()
+        self.lbj23_client.force_authenticate(self.lbj23)
+        response = self.lbj23_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['success'], True)
+        self.assertEqual(Comment.objects.count(), count - 1)
