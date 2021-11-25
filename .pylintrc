@@ -11,6 +11,7 @@
 #    Date      Name                    Description of Change
 # 10-Oct-2021  Wayne Shih              Initial create and modify as own needs
 # 05-Nov-2021  Wayne Shih              Add manage.py to ignore
+# 25-Nov-2021  Wayne Shih              Enable wrong-import-order
 # $HISTORY$
 # =================================================================================================
 
@@ -156,7 +157,7 @@ disable=abstract-method,
         useless-object-inheritance,
         useless-suppression,
         using-cmp-argument,
-        # wrong-import-order,
+        wrong-import-order,
         xrange-builtin,
         zip-builtin-not-iterating,
 

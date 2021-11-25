@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 06-Nov-2021  Wayne Shih              Initial create
 # 13-Nov-2021  Wayne Shih              Add tests for comments update and destroy apis
+# 25-Nov-2021  Wayne Shih              Add tests for comments list api
 # $HISTORY$
 # =================================================================================================
 
@@ -21,7 +22,7 @@ from testing.testcases import TestCase
 
 # <Wayne Shih> 06-Nov-2021
 # URL MUST end with '/', OW, status_code will become 301
-COMMENT_CREATE_URL = '/api/comments/'
+COMMENT_URL = '/api/comments/'
 COMMENT_DETAIL_URL = '/api/comments/{}/'
 
 
@@ -37,16 +38,16 @@ class CommentApiTests(TestCase):
         self.kd35_client.force_authenticate(self.kd35)
 
     def test_create_api(self):
-        response = self.anonymous_client.get(COMMENT_CREATE_URL)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        response = self.anonymous_client.post(COMMENT_CREATE_URL)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        response = self.kd35_client.get(COMMENT_CREATE_URL)
+        response = self.anonymous_client.patch(COMMENT_URL)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-        response = self.kd35_client.post(COMMENT_CREATE_URL)
+        response = self.anonymous_client.post(COMMENT_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        response = self.kd35_client.patch(COMMENT_URL)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.kd35_client.post(COMMENT_URL)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
@@ -59,7 +60,7 @@ class CommentApiTests(TestCase):
             'This field may not be null.'
         )
 
-        response = self.kd35_client.post(COMMENT_CREATE_URL, {'tweet_id': self.tweet.id})
+        response = self.kd35_client.post(COMMENT_URL, {'tweet_id': self.tweet.id})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
@@ -68,7 +69,7 @@ class CommentApiTests(TestCase):
             'This field may not be null.'
         )
 
-        response = self.kd35_client.post(COMMENT_CREATE_URL, {'content': 'Good 4 u, my bro!'})
+        response = self.kd35_client.post(COMMENT_URL, {'content': 'Good 4 u, my bro!'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
@@ -77,7 +78,7 @@ class CommentApiTests(TestCase):
             'This field may not be null.'
         )
 
-        response = self.kd35_client.post(COMMENT_CREATE_URL, {
+        response = self.kd35_client.post(COMMENT_URL, {
             'tweet_id': self.tweet.id,
             'content': '1' * 141
         })
@@ -86,7 +87,7 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['message'], 'Please check input.')
         self.assertEqual('content' in response.data['errors'], True)
 
-        response = self.kd35_client.post(COMMENT_CREATE_URL, {
+        response = self.kd35_client.post(COMMENT_URL, {
             'tweet_id': self.tweet.id,
             'content': 'Good 4 u, my bro!'
         })
@@ -103,7 +104,7 @@ class CommentApiTests(TestCase):
         )
 
         non_existing_tweet_id = 1000
-        response = self.kd35_client.post(COMMENT_CREATE_URL, {
+        response = self.kd35_client.post(COMMENT_URL, {
             'tweet_id': non_existing_tweet_id,
             'content': 'Good 4 u, my bro!'
         })
@@ -120,11 +121,8 @@ class CommentApiTests(TestCase):
         url = COMMENT_DETAIL_URL.format(comment.id)
 
         # Non-login users
-        # <Wayne Shih> 13-Nov-2021
-        # TODO:
-        #   This check might be not not suitable when retrieve api is considered.
-        response = self.anonymous_client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        response = self.anonymous_client.patch(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         response = self.anonymous_client.put(url, {'content': 'dummy comment'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -197,11 +195,8 @@ class CommentApiTests(TestCase):
         url = COMMENT_DETAIL_URL.format(comment.id)
 
         # Non-login users
-        # <Wayne Shih> 13-Nov-2021
-        # TODO:
-        #   This check might be not not suitable when retrieve api is considered.
-        response = self.anonymous_client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        response = self.anonymous_client.patch(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         response = self.anonymous_client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -224,3 +219,41 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['success'], True)
         self.assertEqual(Comment.objects.count(), count - 1)
+
+    def test_list_api(self):
+        response = self.anonymous_client.get(COMMENT_URL)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # No comments
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'tweet_id': self.tweet.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['comments']), 0)
+
+        # get comments order by 'created_at'
+        self.create_comment(self.lbj23, self.tweet, 'I am chasing the GOAT!')
+        self.create_comment(self.kd35, self.tweet, 'Good work, bro!')
+        self.create_comment(
+            self.kd35,
+            self.create_tweet(self.kd35, 'another tweet'),
+            'how u doing'
+        )
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'tweet_id': self.tweet.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['comments']), 2)
+        self.assertEqual(
+            response.data['comments'][0]['created_at'] <
+            response.data['comments'][1]['created_at'],
+            True
+        )
+
+        # filter by user_id should not affect
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'tweet_id': self.tweet.id,
+            'user_id': self.lbj23,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['comments']), 2)
