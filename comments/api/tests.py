@@ -10,6 +10,7 @@
 # 13-Nov-2021  Wayne Shih              Add tests for comments update and destroy apis
 # 25-Nov-2021  Wayne Shih              Add tests for comments list api
 # 25-Nov-2021  Wayne Shih              Add more tests for comments list api
+# 25-Nov-2021  Wayne Shih              Add more tests for comments list api
 # $HISTORY$
 # =================================================================================================
 
@@ -287,3 +288,11 @@ class CommentApiTests(TestCase):
             response.data['comments'][1]['created_at'],
             True
         )
+
+        # foo filter should not affect the result
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'tweet_id': self.tweet.id,
+            'foo': self.lbj23.id,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['comments']), 2)
