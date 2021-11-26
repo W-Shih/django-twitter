@@ -11,12 +11,13 @@
 #    Date      Name                    Description of Change
 # 06-Nov-2021  Wayne Shih              Initial create
 # 13-Nov-2021  Wayne Shih              Add comments update and destroy apis
+# 25-Nov-2021  Wayne Shih              Add comments list apis
 # $HISTORY$
 # =================================================================================================
 
 
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -32,10 +33,29 @@ from comments.models import Comment
 class CommentViewSet(viewsets.GenericViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializerForCreate
-    # <Wayne Shih> 13-Nov-2021
-    # TODO:
-    #   This permission_classes might be not not suitable when retrieve api is considered.
-    permission_classes = [IsAuthenticated, IsObjectOwner]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAuthenticated()]
+        if self.action in ['update', 'destroy']:
+            return [IsAuthenticated(), IsObjectOwner()]
+        return [AllowAny()]
+
+    # <Wayne Shih> 25-Nov-2021
+    # URL:
+    # - GET /api/comments/?tweet_id=1 -> Get all comments related to a given tweet
+    def list(self, request: Request):
+        if 'tweet_id' not in request.query_params:
+            return Response({
+                'success': False,
+                'message': 'Missing tweet_id in request',
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        tweet_id = request.query_params['tweet_id']
+        comments = Comment.objects.filter(tweet_id=tweet_id).order_by('created_at')
+        return Response({
+            'comments': CommentSerializer(comments, many=True).data,
+        }, status=status.HTTP_200_OK)
 
     # <Wayne Shih> 06-Nov-2021
     # URL:
