@@ -13,6 +13,7 @@
 # 13-Nov-2021  Wayne Shih              Add comments update and destroy apis
 # 25-Nov-2021  Wayne Shih              Add comments list api
 # 25-Nov-2021  Wayne Shih              Enhance comments list api by dango-filters
+# 25-Nov-2021  Wayne Shih              Enhance comments list api by prefetch_related/select_related
 # $HISTORY$
 # =================================================================================================
 
@@ -58,7 +59,16 @@ class CommentViewSet(viewsets.GenericViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         queryset = self.get_queryset()
-        comments = self.filter_queryset(queryset).order_by('created_at')
+        # <Wayne Shih> 25-Nov-2021
+        # prefetch_related <-> SQL SELECT in query
+        # select_related <-> SQL SELECT JOIN
+        # JOIN is not recommended because JOIN only works in the same database.
+        # If these user and comment are not in the same db, then JOIN will NOT work.
+        # comments = self.filter_queryset(queryset).select_related('user').order_by('created_at')
+        comments = self.filter_queryset(queryset)\
+            .prefetch_related('user')\
+            .order_by('created_at')
+
         return Response({
             'comments': CommentSerializer(comments, many=True).data,
         }, status=status.HTTP_200_OK)
