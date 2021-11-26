@@ -11,7 +11,8 @@
 #    Date      Name                    Description of Change
 # 06-Nov-2021  Wayne Shih              Initial create
 # 13-Nov-2021  Wayne Shih              Add comments update and destroy apis
-# 25-Nov-2021  Wayne Shih              Add comments list apis
+# 25-Nov-2021  Wayne Shih              Add comments list api
+# 25-Nov-2021  Wayne Shih              Enhance comments list api by dango-filters
 # $HISTORY$
 # =================================================================================================
 
@@ -33,6 +34,7 @@ from comments.models import Comment
 class CommentViewSet(viewsets.GenericViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializerForCreate
+    filterset_fields = ('tweet_id', 'user_id')
 
     def get_permissions(self):
         if self.action == 'create':
@@ -42,17 +44,21 @@ class CommentViewSet(viewsets.GenericViewSet):
         return [AllowAny()]
 
     # <Wayne Shih> 25-Nov-2021
+    # django-filter
+    # - https://www.django-rest-framework.org/api-guide/filtering/
+    #
     # URL:
     # - GET /api/comments/?tweet_id=1 -> Get all comments related to a given tweet
+    # - GET /api/comments/?user_id=1 -> Get all comments related to a given user
     def list(self, request: Request):
-        if 'tweet_id' not in request.query_params:
+        if 'tweet_id' not in request.query_params and 'user_id' not in request.query_params:
             return Response({
                 'success': False,
-                'message': 'Missing tweet_id in request',
+                'message': 'Missing tweet_id or user_id in request',
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        tweet_id = request.query_params['tweet_id']
-        comments = Comment.objects.filter(tweet_id=tweet_id).order_by('created_at')
+        queryset = self.get_queryset()
+        comments = self.filter_queryset(queryset).order_by('created_at')
         return Response({
             'comments': CommentSerializer(comments, many=True).data,
         }, status=status.HTTP_200_OK)

@@ -9,6 +9,7 @@
 # 06-Nov-2021  Wayne Shih              Initial create
 # 13-Nov-2021  Wayne Shih              Add tests for comments update and destroy apis
 # 25-Nov-2021  Wayne Shih              Add tests for comments list api
+# 25-Nov-2021  Wayne Shih              Add more tests for comments list api
 # $HISTORY$
 # =================================================================================================
 
@@ -224,14 +225,28 @@ class CommentApiTests(TestCase):
         response = self.anonymous_client.get(COMMENT_URL)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        # No comments
+        # Non-existing tweet id
+        non_existing_tweet_id = 1000000
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'tweet_id': non_existing_tweet_id
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Non-existing user id
+        non_existing_user_id = 1000000
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'user_id': non_existing_user_id
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # No comments on a tweet
         response = self.anonymous_client.get(COMMENT_URL, {
             'tweet_id': self.tweet.id
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['comments']), 0)
 
-        # get comments order by 'created_at'
+        # get comments on a tweet order by 'created_at'
         self.create_comment(self.lbj23, self.tweet, 'I am chasing the GOAT!')
         self.create_comment(self.kd35, self.tweet, 'Good work, bro!')
         self.create_comment(
@@ -250,10 +265,25 @@ class CommentApiTests(TestCase):
             True
         )
 
-        # filter by user_id should not affect
+        # get comments on a tweet filtered by user_id
         response = self.anonymous_client.get(COMMENT_URL, {
             'tweet_id': self.tweet.id,
-            'user_id': self.lbj23,
+            'user_id': self.lbj23.id,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['user']['username'], self.lbj23.username)
+        self.assertEqual(len(response.data['comments']), 1)
+
+        # get a user's all comments order by 'created_at'
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'user_id': self.kd35.id,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['user']['username'], self.kd35.username)
+        self.assertEqual(response.data['comments'][1]['user']['username'], self.kd35.username)
         self.assertEqual(len(response.data['comments']), 2)
+        self.assertEqual(
+            response.data['comments'][0]['created_at'] <
+            response.data['comments'][1]['created_at'],
+            True
+        )

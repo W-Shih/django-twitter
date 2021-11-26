@@ -10,6 +10,7 @@
 # 17-Oct-2021  Wayne Shih              Add codacy
 # 05-Nov-2021  Wayne Shih              Turn off curl's verification of the certificate by -k option
 # 06-Nov-2021  Wayne Shih              Add pylint
+# 25-Nov-2021  Wayne Shih              React to requirements.txt update
 # $HISTORY$
 # =================================================================================================
 
@@ -27,7 +28,6 @@ services:
 install:
   - pip install -U pip
   - pip install -r requirements.txt
-  - pip install django-debug-toolbar
   - pip install coverage
   - pip install codecov
   - pip install pylint
