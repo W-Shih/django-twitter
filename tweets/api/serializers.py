@@ -15,6 +15,7 @@
 #    Date      Name                    Description of Change
 # 06-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 27-Nov-2021  Wayne Shih              Add TweetSerializerWithComments for tweet retrieve api
 # $HISTORY$
 # =================================================================================================
 
@@ -22,6 +23,7 @@
 from rest_framework import serializers
 
 from accounts.api.serializers import UserSerializerForTweet
+from comments.api.serializers import CommentSerializer
 from tweets.models import Tweet
 
 
@@ -31,6 +33,21 @@ class TweetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tweet
         fields = ('id', 'user', 'created_at', 'content')
+
+
+class TweetSerializerWithComments(TweetSerializer):
+    # <Wayne Shih> 26-Nov-2021
+    # - https://docs.djangoproject.com/en/3.2/topics/db/queries/#following-relationships-backward
+    # - https://www.django-rest-framework.org/api-guide/fields/#using-source
+    #
+    # <Wayne Shih> 27-Nov-2021
+    # TODO:
+    #   prefetch_related for comments
+    comments = CommentSerializer(source='comment_set', many=True)
+
+    class Meta:
+        model = Tweet
+        fields = ('id', 'user', 'created_at', 'content', 'comments')
 
 
 class TweetSerializerForCreate(serializers.ModelSerializer):
