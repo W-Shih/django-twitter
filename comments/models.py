@@ -11,6 +11,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 05-Nov-2021  Wayne Shih              Initial create
+# 27-Nov-2021  Wayne Shih              Update Comment ordering
 # $HISTORY$
 # =================================================================================================
 
@@ -39,7 +40,7 @@ class Comment(models.Model):
 
     class Meta:
         index_together = (('tweet', 'created_at'),)
-        ordering = ('-created_at',)
+        ordering = ('created_at',)
 
     def __str__(self):
         message = '{created_at}, {user}-{user_id} says "{content}" on tweet-{tweet_id}'

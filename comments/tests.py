@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 05-Nov-2021  Wayne Shih              Initial create
+# 27-Nov-2021  Wayne Shih              React to  Comment ordering update
 # $HISTORY$
 # =================================================================================================
 
@@ -47,11 +48,11 @@ class CommentTest(TestCase):
         )
         comments = Comment.objects.all()
         self.assertEqual(comments.count(), 2)
-        # <Wayne Shih> 07-Sep-2021
-        # test order by '-created_at'
-        self.assertEqual(comments.first().user, None)
-        self.assertEqual(comments.first().content, comment.content)
-        self.assertEqual(comments.first().created_at > self.kobe24_comment.updated_at, True)
+        # <Wayne Shih> 27-Nov-2021
+        # test order by 'created_at'
+        self.assertEqual(comments.last().user, None)
+        self.assertEqual(comments.last().content, comment.content)
+        self.assertEqual(comments.last().created_at > self.kobe24_comment.updated_at, True)
 
         self.assertEqual(hasattr(self.kobe24, 'comment_set'), True)
         self.assertEqual(hasattr(self.tweet, 'comment_set'), True)
@@ -64,7 +65,7 @@ class CommentTest(TestCase):
             bool(re.search('tweet(.*?)created_at', str(Comment._meta.index_together))),
             True
         )
-        self.assertEqual(Comment._meta.ordering, ('-created_at',))
+        self.assertEqual(Comment._meta.ordering, ('created_at',))
 
     def test_comment_on_delete(self):
         self.kobe24.delete()

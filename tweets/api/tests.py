@@ -10,6 +10,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 04-Nov-2021  Wayne Shih              React to adding anonymous_client to base class
 # 06-Nov-2021  Wayne Shih              Modify some assertEqual to check set instead of list
+# 27-Nov-2021  Wayne Shih              Add tests for tweet retrieve api
 # $HISTORY$
 # =================================================================================================
 
@@ -23,6 +24,7 @@ from tweets.models import Tweet
 
 TWEET_LIST_URL = '/api/tweets/'
 TWEET_CREATE_URL = '/api/tweets/'
+TWEET_RETRIEVE_URL = '/api/tweets/{}/'
 
 
 class TweetApiTests(TestCase):
@@ -116,4 +118,47 @@ class TweetApiTests(TestCase):
         self.assertEqual(
             set(response.data.keys()),
             {'id', 'user', 'created_at', 'content'}
+        )
+
+    def test_retrieve_api(self):
+        # Non-existing tweet
+        non_existing_tweet_id = -1
+        url = TWEET_RETRIEVE_URL.format(non_existing_tweet_id)
+        response = self.anonymous_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Get tweet with 0 comment
+        tweet = self.create_tweet(self.user1, 'This is for u!')
+        url = TWEET_RETRIEVE_URL.format(tweet.id)
+        response = self.anonymous_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.json().keys(),
+            {'id', 'user', 'comments', 'created_at', 'content'}
+        )
+        self.assertEqual(response.json().get('user').keys(), {'id', 'username'})
+        self.assertEqual(isinstance(response.json().get('comments'), list), True)
+        self.assertEqual(len(response.data['comments']), 0)
+
+        # Get tweet with 3 comments
+        self.create_comment(self.user1, tweet, 'Chasing the GOAT!')
+        self.create_comment(self.user2, tweet, 'Good for u!')
+        self.create_comment(
+            self.user2,
+            self.create_tweet(self.user2, 'another tweet'),
+            'tweet man'
+        )
+        response = self.anonymous_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['comments']), 2)
+        self.assertEqual(
+            response.json().get('comments')[0].keys(),
+            {'id', 'tweet_id', 'user', 'content', 'created_at'}
+        )
+        self.assertEqual(response.data['comments'][0]['user']['username'], self.user1.username)
+        self.assertEqual(response.data['comments'][1]['user']['username'], self.user2.username)
+        self.assertEqual(
+            response.data['comments'][0]['created_at'] <
+            response.data['comments'][1]['created_at'],
+            True
         )

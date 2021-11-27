@@ -12,6 +12,7 @@
 # 06-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 18-Oct-2021  Wayne Shih              Add newsfeeds fanout to followers
+# 27-Nov-2021  Wayne Shih              Add retrieve api
 # $HISTORY$
 # =================================================================================================
 
@@ -22,7 +23,11 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from newsfeeds.services import NewsFeedService
-from tweets.api.serializers import TweetSerializer, TweetSerializerForCreate
+from tweets.api.serializers import (
+    TweetSerializer,
+    TweetSerializerForCreate,
+    TweetSerializerWithComments,
+)
 from tweets.models import Tweet
 
 
@@ -31,13 +36,24 @@ class TweetViewSet(viewsets.GenericViewSet):
     # rest_framework will use serializer_class to be the POST format at the rest page
     # - https://www.django-rest-framework.org/api-guide/generic-views/#genericapiview
     serializer_class = TweetSerializerForCreate
+    # <Wayne Shih> 27-Nov-2021
+    # TODO:
+    #   prefetch_related for comments
+    queryset = Tweet.objects.all()
 
     # <Wayne Shih> 06-Sep-2021
     # - https://www.django-rest-framework.org/api-guide/viewsets/#introspecting-viewset-actions
     def get_permissions(self):
-        if self.action == 'list':
+        if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    # <Wayne Shih> 26-Nov-2021
+    # URL:
+    # - GET /api/tweets/{pk}/
+    def retrieve(self, request: Request, *args, **kwargs):
+        tweet = self.get_object()
+        return Response(TweetSerializerWithComments(tweet).data, status=status.HTTP_200_OK)
 
     # <Wayne Shih> 06-Sep-2021
     # URL:
