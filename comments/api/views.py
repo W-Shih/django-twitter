@@ -14,6 +14,7 @@
 # 25-Nov-2021  Wayne Shih              Add comments list api
 # 25-Nov-2021  Wayne Shih              Enhance comments list api by dango-filters
 # 25-Nov-2021  Wayne Shih              Enhance comments list api by prefetch_related/select_related
+# 27-Nov-2021  Wayne Shih              Enhance comments list api by decorator
 # $HISTORY$
 # =================================================================================================
 
@@ -30,6 +31,7 @@ from comments.api.serializers import (
     CommentSerializerForUpdate,
 )
 from comments.models import Comment
+from utils.decorators import required_params
 
 
 class CommentViewSet(viewsets.GenericViewSet):
@@ -51,13 +53,8 @@ class CommentViewSet(viewsets.GenericViewSet):
     # URL:
     # - GET /api/comments/?tweet_id=1 -> Get all comments related to a given tweet
     # - GET /api/comments/?user_id=1 -> Get all comments related to a given user
+    @required_params(params=['tweet_id', 'user_id'], is_required_all=False)
     def list(self, request: Request):
-        if 'tweet_id' not in request.query_params and 'user_id' not in request.query_params:
-            return Response({
-                'success': False,
-                'message': 'Missing tweet_id or user_id in request',
-            }, status=status.HTTP_400_BAD_REQUEST)
-
         queryset = self.get_queryset()
         # <Wayne Shih> 25-Nov-2021
         # prefetch_related <-> SQL SELECT in query
