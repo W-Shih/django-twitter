@@ -13,6 +13,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 18-Oct-2021  Wayne Shih              Add newsfeeds fanout to followers
 # 27-Nov-2021  Wayne Shih              Add retrieve api
+# 27-Nov-2021  Wayne Shih              Enhance api by prefetch_related and decorator
 # $HISTORY$
 # =================================================================================================
 
@@ -29,6 +30,7 @@ from tweets.api.serializers import (
     TweetSerializerWithComments,
 )
 from tweets.models import Tweet
+from utils.decorators import required_params
 
 
 class TweetViewSet(viewsets.GenericViewSet):
@@ -39,7 +41,7 @@ class TweetViewSet(viewsets.GenericViewSet):
     # <Wayne Shih> 27-Nov-2021
     # TODO:
     #   prefetch_related for comments
-    queryset = Tweet.objects.all()
+    queryset = Tweet.objects.all().prefetch_related('user')
 
     # <Wayne Shih> 06-Sep-2021
     # - https://www.django-rest-framework.org/api-guide/viewsets/#introspecting-viewset-actions
@@ -62,14 +64,12 @@ class TweetViewSet(viewsets.GenericViewSet):
     # - https://www.django-rest-framework.org/api-guide/viewsets/#viewset-actions
     # - https://www.django-rest-framework.org/api-guide/viewsets/#genericviewset
     # - https://www.django-rest-framework.org/api-guide/viewsets/#example
+    @required_params(params=['user_id'])
     def list(self, request: Request):
-        if 'user_id' not in request.query_params:
-            return Response({'message': 'Missing user_id.'}, status=status.HTTP_400_BAD_REQUEST)
-
         # <Wayne Shih> 06-Sep-2021
         # Does it need to check if user_id exist? -- Keep silence for now
         user_id = request.query_params['user_id']
-        tweets = Tweet.objects.filter(user_id=user_id)
+        tweets = Tweet.objects.filter(user_id=user_id).prefetch_related('user')
         # print('--- sql --- \n{}'.format(tweets.query))
         return Response({
             'tweets': TweetSerializer(tweets, many=True).data,

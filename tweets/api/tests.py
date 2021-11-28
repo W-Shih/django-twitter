@@ -11,6 +11,7 @@
 # 04-Nov-2021  Wayne Shih              React to adding anonymous_client to base class
 # 06-Nov-2021  Wayne Shih              Modify some assertEqual to check set instead of list
 # 27-Nov-2021  Wayne Shih              Add tests for tweet retrieve api
+# 27-Nov-2021  Wayne Shih              React to decorator enhancement
 # $HISTORY$
 # =================================================================================================
 
@@ -51,7 +52,11 @@ class TweetApiTests(TestCase):
     def test_list_api(self):
         response = self.anonymous_client.get(TWEET_LIST_URL)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['message'], 'Missing user_id.')
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        errors_str = 'Request is missing param(s): user_id. ' \
+                     'All missing params are required to provide.'
+        self.assertEqual(response.data['errors'], errors_str)
 
         response = self.anonymous_client.get(TWEET_LIST_URL, {'user_id': self.user1.id})
         tweets = response.data['tweets']
@@ -146,7 +151,6 @@ class TweetApiTests(TestCase):
         self.create_comment(
             self.user2,
             self.create_tweet(self.user2, 'another tweet'),
-            'tweet man'
         )
         response = self.anonymous_client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

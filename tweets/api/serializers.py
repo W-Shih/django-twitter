@@ -16,6 +16,7 @@
 # 06-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Nov-2021  Wayne Shih              Add TweetSerializerWithComments for tweet retrieve api
+# 27-Nov-2021  Wayne Shih              Use SerializerMethodField instead to prefetch for comments
 # $HISTORY$
 # =================================================================================================
 
@@ -39,15 +40,22 @@ class TweetSerializerWithComments(TweetSerializer):
     # <Wayne Shih> 26-Nov-2021
     # - https://docs.djangoproject.com/en/3.2/topics/db/queries/#following-relationships-backward
     # - https://www.django-rest-framework.org/api-guide/fields/#using-source
+    # It seems like source='comment_set' is not able to prefetch_related for comments
+    # comments = CommentSerializer(source='comment_set', many=True)
     #
     # <Wayne Shih> 27-Nov-2021
-    # TODO:
-    #   prefetch_related for comments
-    comments = CommentSerializer(source='comment_set', many=True)
+    # Use SerializerMethodField instead in order to prefetch_related for comments
+    comments = serializers.SerializerMethodField()
 
     class Meta:
         model = Tweet
         fields = ('id', 'user', 'created_at', 'content', 'comments')
+
+    def get_comments(self, obj):
+        return CommentSerializer(
+            obj.comment_set.all().prefetch_related('user'),
+            many=True
+        ).data
 
 
 class TweetSerializerForCreate(serializers.ModelSerializer):
