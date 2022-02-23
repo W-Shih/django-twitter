@@ -14,6 +14,7 @@
 # 18-Oct-2021  Wayne Shih              Add newsfeeds fanout to followers
 # 27-Nov-2021  Wayne Shih              Add retrieve api
 # 27-Nov-2021  Wayne Shih              Enhance api by prefetch_related and decorator
+# 23-Feb-2022  Wayne Shih              Add TODO: to enhance list api by django-filters
 # $HISTORY$
 # =================================================================================================
 
@@ -69,6 +70,9 @@ class TweetViewSet(viewsets.GenericViewSet):
         # <Wayne Shih> 06-Sep-2021
         # Does it need to check if user_id exist? -- Keep silence for now
         user_id = request.query_params['user_id']
+        # <Wayne Shih> 23-Feb-2022
+        # TODO:
+        #   Here could be enhanced by django-filters
         tweets = Tweet.objects.filter(user_id=user_id).prefetch_related('user')
         # print('--- sql --- \n{}'.format(tweets.query))
         return Response({

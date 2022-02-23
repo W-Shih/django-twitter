@@ -12,9 +12,10 @@
 # 06-Nov-2021  Wayne Shih              Initial create
 # 13-Nov-2021  Wayne Shih              Add comments update and destroy apis
 # 25-Nov-2021  Wayne Shih              Add comments list api
-# 25-Nov-2021  Wayne Shih              Enhance comments list api by dango-filters
+# 25-Nov-2021  Wayne Shih              Enhance comments list api by django-filters
 # 25-Nov-2021  Wayne Shih              Enhance comments list api by prefetch_related/select_related
 # 27-Nov-2021  Wayne Shih              Enhance comments list api by decorator
+# 23-Feb-2022  Wayne Shih              Enhance comments list api by django-filters: filterset_class
 # $HISTORY$
 # =================================================================================================
 
@@ -32,12 +33,25 @@ from comments.api.serializers import (
 )
 from comments.models import Comment
 from utils.decorators import required_params
+import django_filters
+
+
+class CommentFilter(django_filters.rest_framework.FilterSet):
+    # https://www.django-rest-framework.org/api-guide/filtering/#overriding-the-initial-queryset
+    # https://django-filter.readthedocs.io/en/latest/guide/rest_framework.html#adding-a-filterset-with-filterset-class
+    # https://q1mi.github.io/Django-REST-framework-documentation/api-guide/filtering_zh/#specifying-a-filtersetfilterset
+    tweet_id = django_filters.NumberFilter(field_name='tweet_id')
+    user_id = django_filters.NumberFilter(field_name='user_id')
+
+    class Meta:
+        model = Comment
+        fields = ('tweet_id', 'user_id')
 
 
 class CommentViewSet(viewsets.GenericViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializerForCreate
-    filterset_fields = ('tweet_id', 'user_id')
+    filterset_class = CommentFilter
 
     def get_permissions(self):
         if self.action == 'create':

@@ -11,6 +11,7 @@
 # 25-Nov-2021  Wayne Shih              Add tests for comments list api
 # 25-Nov-2021  Wayne Shih              Add more tests for comments list api
 # 25-Nov-2021  Wayne Shih              Add more tests for comments list api
+# 23-Feb-2022  Wayne Shih              React to enhancement by django-filters: filterset_class
 # $HISTORY$
 # =================================================================================================
 
@@ -227,18 +228,20 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Non-existing tweet id
-        non_existing_tweet_id = 1000000
+        non_existing_tweet_id = -1
         response = self.anonymous_client.get(COMMENT_URL, {
             'tweet_id': non_existing_tweet_id
         })
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['comments']), 0)
 
         # Non-existing user id
-        non_existing_user_id = 1000000
+        non_existing_user_id = -1
         response = self.anonymous_client.get(COMMENT_URL, {
             'user_id': non_existing_user_id
         })
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['comments']), 0)
 
         # No comments on a tweet
         response = self.anonymous_client.get(COMMENT_URL, {
