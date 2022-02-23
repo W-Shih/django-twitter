@@ -12,6 +12,7 @@
 # 06-Nov-2021  Wayne Shih              Modify some assertEqual to check set instead of list
 # 27-Nov-2021  Wayne Shih              Add tests for tweet retrieve api
 # 27-Nov-2021  Wayne Shih              React to decorator enhancement
+# 23-Feb-2022  Wayne Shih              Add a test for tweet list api
 # $HISTORY$
 # =================================================================================================
 
@@ -57,6 +58,14 @@ class TweetApiTests(TestCase):
         errors_str = 'Request is missing param(s): user_id. ' \
                      'All missing params are required to provide.'
         self.assertEqual(response.data['errors'], errors_str)
+
+        # Non-existing user id
+        non_existing_user_id = -1
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': non_existing_user_id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['tweets']), 0)
 
         response = self.anonymous_client.get(TWEET_LIST_URL, {'user_id': self.user1.id})
         tweets = response.data['tweets']
