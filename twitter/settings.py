@@ -17,6 +17,7 @@
 # 05-Nov-2021  Wayne Shih              Add comments
 # 06-Nov-2021  Wayne Shih              Add local_settings
 # 25-Nov-2021  Wayne Shih              Add django_filters
+# 24-Feb-2022  Wayne Shih              Add likes
 # $HISTORY$
 # =================================================================================================
 
@@ -77,7 +78,8 @@ INSTALLED_APPS = [
     'tweets',
     'friendships',
     'newsfeeds',
-    'comments'
+    'comments',
+    'likes',
 ]
 
 REST_FRAMEWORK = {

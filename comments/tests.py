@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 05-Nov-2021  Wayne Shih              Initial create
 # 27-Nov-2021  Wayne Shih              React to  Comment ordering update
+# 24-Feb-2022  Wayne Shih              Add tests for likes model
 # $HISTORY$
 # =================================================================================================
 
@@ -102,3 +103,22 @@ class CommentTest(TestCase):
             content=self.kobe24_comment.content,
             tweet_id=self.kobe24_comment.tweet_id,
         ), str(self.kobe24_comment))
+
+    def test_like_set(self):
+        self.create_like(self.lbj23, self.kobe24_comment)
+        self.assertEqual(self.kobe24_comment.like_set.count(), 1)
+
+        self.create_like(self.lbj23, self.kobe24_comment)
+        self.assertEqual(self.kobe24_comment.like_set.count(), 1)
+
+        self.create_like(self.kobe24, self.kobe24_comment)
+        self.assertEqual(self.kobe24_comment.like_set.count(), 2)
+
+    def test_like_str(self):
+        like = self.create_like(self.lbj23, self.kobe24_comment)
+
+        # print(like)
+        self.assertEqual(like.user.username in str(like), True)
+        self.assertEqual(str(like.created_at) in str(like), True)
+        self.assertEqual(str(like.content_type) in str(like), True)
+        self.assertEqual(str(like.object_id) in str(like), True)

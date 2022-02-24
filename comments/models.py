@@ -12,13 +12,16 @@
 #    Date      Name                    Description of Change
 # 05-Nov-2021  Wayne Shih              Initial create
 # 27-Nov-2021  Wayne Shih              Update Comment ordering
+# 24-Feb-2022  Wayne Shih              Add like_set as relationships “backward”
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from likes.models import Like
 from tweets.models import Tweet
 
 
@@ -51,3 +54,14 @@ class Comment(models.Model):
             content=self.content,
             tweet_id=self.tweet_id,
         )
+
+    # <Wayne Shih> 24-Feb-2022
+    # Write our own relationships “backward”
+    #   - https://docs.djangoproject.com/en/4.0/topics/db/queries/#following-relationships-backward
+    @property
+    def like_set(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return Like.objects.filter(
+            content_type=content_type,
+            object_id=self.id,
+        ).order_by('-created_at')
