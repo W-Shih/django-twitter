@@ -16,9 +16,12 @@
 # 25-Nov-2021  Wayne Shih              Enhance comments list api by prefetch_related/select_related
 # 27-Nov-2021  Wayne Shih              Enhance comments list api by decorator
 # 23-Feb-2022  Wayne Shih              Enhance comments list api by django-filters: filterset_class
+# 24-Feb-2022  Wayne Shih              Fix pylint
 # $HISTORY$
 # =================================================================================================
 
+
+import django_filters
 
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -33,7 +36,6 @@ from comments.api.serializers import (
 )
 from comments.models import Comment
 from utils.decorators import required_params
-import django_filters
 
 
 class CommentFilter(django_filters.rest_framework.FilterSet):

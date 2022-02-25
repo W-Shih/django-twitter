@@ -12,15 +12,18 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 04-Nov-2021  Wayne Shih              Add anonymous_client
 # 04-Nov-2021  Wayne Shih              Add create_comment
+# 24-Feb-2022  Wayne Shih              Add create_like
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase as DjangoTestCase
 from rest_framework.test import APIClient
 
 from comments.models import Comment
+from likes.models import Like
 from tweets.models import Tweet
 
 
@@ -53,3 +56,13 @@ class TestCase(DjangoTestCase):
         if content is None:
             content = 'Default content -- Welcome to Django-Twitter'
         return Comment.objects.create(user=user, tweet=tweet, content=content)
+
+    def create_like(self, user, target):
+        # <Wayne Shih> 24-Feb-2022
+        # target is tweet or comment
+        instance, _ = Like.objects.get_or_create(
+            user=user,
+            content_type=ContentType.objects.get_for_model(target.__class__),
+            object_id=target.id,
+        )
+        return instance
