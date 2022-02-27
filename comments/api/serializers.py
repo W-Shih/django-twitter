@@ -15,6 +15,7 @@
 #    Date      Name                    Description of Change
 # 06-Nov-2021  Wayne Shih              Initial create
 # 13-Nov-2021  Wayne Shih              Add CommentSerializerForUpdate and some comments
+# 27-Feb-2022  Wayne Shih              Enhance CommentSerializerForCreate() and add DefaultCommentSerializer
 # $HISTORY$
 # =================================================================================================
 
@@ -26,6 +27,10 @@ from comments.models import Comment
 from tweets.models import Tweet
 
 
+class DefaultCommentSerializer(serializers.Serializer):
+    pass
+
+
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializerForComment()
 
@@ -35,15 +40,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializerForCreate(serializers.ModelSerializer):
-    # <Wayne Shih> 11-Nov-2021
-    # Comment model only has tweet and user and has no tweet_id and user_id,
-    # so need to specify user_id and tweet_id here.
-    user_id = serializers.IntegerField()
     tweet_id = serializers.IntegerField()
 
     class Meta:
         model = Comment
-        fields = ('user_id', 'tweet_id', 'content',)
+        fields = ('tweet_id', 'content',)
 
     def validate(self, data):
         if not Tweet.objects.filter(id=data['tweet_id']).exists():
@@ -56,9 +57,9 @@ class CommentSerializerForCreate(serializers.ModelSerializer):
     # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
     def create(self, validated_data):
         comment = Comment.objects.create(
-            user_id=validated_data['user_id'],
+            user_id=self.context['request'].user.id,
             tweet_id=validated_data['tweet_id'],
-            content=validated_data['content']
+            content=validated_data['content'],
         )
         return comment
 

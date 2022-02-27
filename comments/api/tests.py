@@ -12,6 +12,7 @@
 # 25-Nov-2021  Wayne Shih              Add more tests for comments list api
 # 25-Nov-2021  Wayne Shih              Add more tests for comments list api
 # 23-Feb-2022  Wayne Shih              React to enhancement by django-filters: filterset_class
+# 27-Feb-2022  Wayne Shih              React to enhancement by decorator and add tests for update
 # $HISTORY$
 # =================================================================================================
 
@@ -55,12 +56,9 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
         self.assertEqual(
-            response.data['errors']['tweet_id'][0],
-            'This field may not be null.'
-        )
-        self.assertEqual(
-            response.data['errors']['content'][0],
-            'This field may not be null.'
+            response.data['errors'],
+            'Request is missing param(s): tweet_id, content. '
+            'All missing params are required to provide.'
         )
 
         response = self.kd35_client.post(COMMENT_URL, {'tweet_id': self.tweet.id})
@@ -68,8 +66,8 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
         self.assertEqual(
-            response.data['errors']['content'][0],
-            'This field may not be null.'
+            response.data['errors'],
+            'Request is missing param(s): content. All missing params are required to provide.'
         )
 
         response = self.kd35_client.post(COMMENT_URL, {'content': 'Good 4 u, my bro!'})
@@ -77,8 +75,8 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
         self.assertEqual(
-            response.data['errors']['tweet_id'][0],
-            'This field may not be null.'
+            response.data['errors'],
+            'Request is missing param(s): tweet_id. All missing params are required to provide.'
         )
 
         response = self.kd35_client.post(COMMENT_URL, {
@@ -148,8 +146,19 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
         self.assertEqual(
+            response.data['errors'],
+            'Request is missing param(s): content. All missing params are required to provide.'
+        )
+
+        # Comment owner, but not passing a blank 'content'
+        self.lbj23_client.force_authenticate(self.lbj23)
+        response = self.lbj23_client.put(url, {'content': ''})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
             response.data['errors']['content'][0],
-            'This field may not be null.'
+            'This field may not be blank.'
         )
 
         # Comment owner, update comment successfully

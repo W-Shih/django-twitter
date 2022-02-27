@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 27-Nov-2021  Wayne Shih              Initial create
+# 27-Feb-2022  Wayne Shih              Fix a bug in required_params() where no params required
 # $HISTORY$
 # =================================================================================================
 
@@ -52,7 +53,7 @@ def required_params(method='GET', params=None, is_required_all=True):
 
             # <Wayne Shih> 27-Nov-2021
             # if at least one param is required
-            if len(missing_params) == len(params):
+            if missing_params and len(missing_params) == len(params):
                 missing_params_str = '/'.join(missing_params)
                 errors_str = f'Request is missing param(s): {missing_params_str}. ' \
                              f'At least one missing param is required to provide.'

@@ -14,6 +14,7 @@
 # 21-Aug-2021  Wayne Shih              Use rest_framework.status instead and add some comments
 # 21-Aug-2021  Wayne Shih              Add ip information in login_status for django-debug-toolbar
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 27-Feb-2021  Wayne Shih              Enhance account api by decorator and GenericViewSet
 # $HISTORY$
 # =================================================================================================
 
@@ -30,10 +31,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from accounts.api.serializers import (
+    DefaultAccountSerializer,
     LoginSerializer,
     SignupSerializer,
     UserSerializer,
 )
+from utils.decorators import required_params
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -41,7 +44,7 @@ class UserViewSet(viewsets.ModelViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer # the class to render the data to json
+    serializer_class = UserSerializer  # the class to render the data to json
     # <Wayne Shih> 21-Aug-2021
     # Set permission_classes
     # - https://www.django-rest-framework.org/api-guide/permissions/#api-reference
@@ -53,8 +56,39 @@ class UserViewSet(viewsets.ModelViewSet):
 # - Just sub-class from ViewSet. ViewSet has no read/write operations.
 #   In this case, we need to write our own operations.
 # - Django rest framework url pattern: /resource/action/
-class AccountViewSet(viewsets.ViewSet):
-    serializer_class = SignupSerializer
+class AccountViewSet(viewsets.GenericViewSet):
+
+    # <Wayne Shih> 27-Feb-2022
+    # Once get_serializer_class() is implemented, then member data serializer_class will
+    # not be used anymore. That is, serializer_class attribute is useless.
+    def get_serializer_class(self):
+        if self.action == 'signup':
+            return SignupSerializer
+        if self.action == 'login':
+            return LoginSerializer
+        return DefaultAccountSerializer
+
+    def list(self, request):
+        return Response({
+            'message': {
+                'Get login status': {
+                    'method': 'GET',
+                    'url': '/api/accounts/login_status/',
+                },
+                'Log out': {
+                    'method': 'POST',
+                    'url': '/api/accounts/logout/',
+                },
+                'Log in': {
+                    'method': 'POST',
+                    'url': 'api/accounts/login/',
+                },
+                'Sign up': {
+                    'method': 'POST',
+                    'url': '/api/accounts/signup/',
+                },
+            }
+        }, status=status.HTTP_200_OK)
 
     # <Wayne Shih> 06-Aug-2021
     # - This operation maps /accounts/login_status
@@ -93,6 +127,7 @@ class AccountViewSet(viewsets.ViewSet):
     # <Wayne Shih> 06-Aug-2021
     # Ref: https://docs.djangoproject.com/en/3.0/topics/auth/default/#django.contrib.auth.logout
     @action(methods=['POST'], detail=False)
+    @required_params(method='POST')
     def logout(self, request):
         """
         Logout current user
@@ -106,6 +141,7 @@ class AccountViewSet(viewsets.ViewSet):
     # - https://docs.djangoproject.com/en/3.2/topics/auth/default/#how-to-log-a-user-in
     # - https://docs.djangoproject.com/en/3.2/ref/contrib/auth/#attributes
     @action(methods=['POST'], detail=False)
+    @required_params(method='POST', params=['username', 'password'])
     def login(self, request):
         """
         Login
@@ -117,7 +153,8 @@ class AccountViewSet(viewsets.ViewSet):
         # Deserializing objects, validated_data, errors
         # - https://www.django-rest-framework.org/api-guide/serializers/#deserializing-objects
         # - https://www.django-rest-framework.org/api-guide/serializers/#validation
-        serializer = LoginSerializer(data=request.data)
+        # serializer = LoginSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             # <Wayne Shih> 21-Aug-2021
             # Responses Signature
@@ -168,13 +205,14 @@ class AccountViewSet(viewsets.ViewSet):
         })
 
     @action(methods=['POST'], detail=False)
+    @required_params(method='POST', params=['username', 'password'])
     def signup(self, request):
         """
         Give username, email, password to sign up a new user
         """
         # <Wayne Shih> 07-Aug-2021
         # get post data
-        serializer = SignupSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response({
                 'success': False,

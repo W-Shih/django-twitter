@@ -9,6 +9,7 @@
 # 12-Aug-2021  Wayne Shih              Initial create
 # 07-Sep-2021  Wayne Shih              React to refactoring TestCase
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 27-Feb-2022  Wayne Shih              Add test for DRF API list page and tests for login
 # $HISTORY$
 # =================================================================================================
 
@@ -19,6 +20,7 @@ from rest_framework.test import APIClient
 from testing.testcases import TestCase
 
 
+DRF_API_LIST_URL = '/api/accounts/'
 LOGIN_URL = '/api/accounts/login/'
 LOGOUT_URL = '/api/accounts/logout/'
 SIGNUP_URL = '/api/accounts/signup/'
@@ -50,6 +52,10 @@ class AccountApiTests(TestCase):
             email='fake_user@twitter.com',
             password='correct_password',
         )
+
+    def test_drf_api_list_page(self):
+        response = self.anonymous_client.get(DRF_API_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # <Wayne Shih> 12-Aug-2021
     # The name of each test method must start with 'test_'.
@@ -88,6 +94,27 @@ class AccountApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors'],
+            'Request is missing param(s): password. All missing params are required to provide.'
+        )
+
+        # Test blank username and password  <Wayne Shih> 27-Feb-2022
+        response = self.client.post(LOGIN_URL, {
+            'username': '',
+            'password': '',
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors']['username'][0],
+            'This field may not be blank.'
+        )
+        self.assertEqual(
+            response.data['errors']['password'][0],
+            'This field may not be blank.'
+        )
 
         # Check now is at not login state  <Wayne Shih> 12-Aug-2021
         response = self.client.get(LOGIN_STATUS_URL)

@@ -11,6 +11,7 @@
 #    Date      Name                    Description of Change
 # 08-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 27-Feb-2021  Wayne Shih              Change default serializer
 # $HISTORY$
 # =================================================================================================
 
@@ -23,6 +24,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from friendships.api.serializers import (
+    DefaultFriendshipSerializer,
     FollowerSerializer,
     FollowingSerializer,
     FriendshipSerializerForCreate,
@@ -32,9 +34,9 @@ from friendships.models import Friendship
 
 class FriendshipViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
-    serializer_class = FriendshipSerializerForCreate
+    serializer_class = DefaultFriendshipSerializer
 
-    def list(self, reqeust):
+    def list(self, request):
         return Response({
             'message': {
                 'Get followers': {
