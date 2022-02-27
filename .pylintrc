@@ -11,7 +11,7 @@
 #    Date      Name                    Description of Change
 # 10-Oct-2021  Wayne Shih              Initial create and modify as own needs
 # 05-Nov-2021  Wayne Shih              Add manage.py to ignore
-# 25-Nov-2021  Wayne Shih              Enable wrong-import-order
+# 26-Feb-2022  Wayne Shih              Enable wrong-import-order
 # $HISTORY$
 # =================================================================================================
 
@@ -51,7 +51,10 @@ confidence=
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-# enable=
+# <Wayne Shih> 26-Feb-2022
+# Pylint seems have a bug on wrong-import-order. 
+# It doesn't report wrong-import-order error.
+enable=all,
 
 # Disable the message, report, category or checker with the given id(s). You
 # can either give multiple identifiers separated by comma (,) or put this
@@ -157,7 +160,9 @@ disable=abstract-method,
         useless-object-inheritance,
         useless-suppression,
         using-cmp-argument,
-        wrong-import-order,
+        # <Wayne Shih> 26-Feb-2022
+        # https://vald-phoenix.github.io/pylint-errors/plerr/errors/imports/C0411.html
+        # wrong-import-order,
         xrange-builtin,
         zip-builtin-not-iterating,
 
