@@ -21,6 +21,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 05-Nov-2021  Wayne Shih              Update TODO
 # 06-Nov-2021  Wayne Shih              Add UserSerializerForComment
+# 26-Feb-2022  Wayne Shih              Add UserSerializerForLike
 # $HISTORY$
 # =================================================================================================
 
@@ -53,6 +54,10 @@ class UserSerializerForFriendship(BaseUserSerializerForDisplay):
 
 
 class UserSerializerForComment(BaseUserSerializerForDisplay):
+    pass
+
+
+class UserSerializerForLike(BaseUserSerializerForDisplay):
     pass
 
 

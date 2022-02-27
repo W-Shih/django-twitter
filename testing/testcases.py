@@ -13,6 +13,7 @@
 # 04-Nov-2021  Wayne Shih              Add anonymous_client
 # 04-Nov-2021  Wayne Shih              Add create_comment
 # 24-Feb-2022  Wayne Shih              Add create_like
+# 26-Feb-2022  Wayne Shih              Add create_user_and_auth_client
 # $HISTORY$
 # =================================================================================================
 
@@ -59,10 +60,19 @@ class TestCase(DjangoTestCase):
 
     def create_like(self, user, target):
         # <Wayne Shih> 24-Feb-2022
-        # target is tweet or comment
+        # target is tweet or comment.
+        # content_type is recorded in django_content_type table.
+        # get_for_model() here is to get model's metadata so that db knows the model.
+        #   - https://docs.djangoproject.com/en/4.0/ref/contrib/contenttypes/#django.contrib.contenttypes.models.ContentTypeManager.get_for_model
         instance, _ = Like.objects.get_or_create(
             user=user,
             content_type=ContentType.objects.get_for_model(target.__class__),
             object_id=target.id,
         )
         return instance
+
+    def create_user_and_auth_client(self, *args, **kwargs):
+        user = self.create_user(*args, **kwargs)
+        client = APIClient()
+        client.force_authenticate(user)
+        return user, client

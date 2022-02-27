@@ -15,6 +15,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 05-Nov-2021  Wayne Shih              Fix pylint checks
 # 24-Feb-2022  Wayne Shih              Add like_set as relationships “backward”
+# 26-Feb-2022  Wayne Shih              Add comments for ContentType
 # $HISTORY$
 # =================================================================================================
 
@@ -53,6 +54,9 @@ class Tweet(models.Model):
     # <Wayne Shih> 24-Feb-2022
     # Write our own relationships “backward”
     #   - https://docs.djangoproject.com/en/4.0/topics/db/queries/#following-relationships-backward
+    # content_type is recorded in django_content_type table.
+    # get_for_model() here is to get model's metadata so that db knows the model.
+    #   - https://docs.djangoproject.com/en/4.0/ref/contrib/contenttypes/#django.contrib.contenttypes.models.ContentTypeManager.get_for_model
     @property
     def like_set(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
