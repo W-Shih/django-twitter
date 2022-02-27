@@ -22,6 +22,7 @@
 # 05-Nov-2021  Wayne Shih              Update TODO
 # 06-Nov-2021  Wayne Shih              Add UserSerializerForComment
 # 26-Feb-2022  Wayne Shih              Add UserSerializerForLike
+# 27-Feb-2022  Wayne Shih              Add DefaultAccountSerializer
 # $HISTORY$
 # =================================================================================================
 
@@ -66,6 +67,10 @@ class UserSerializerForLike(BaseUserSerializerForDisplay):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
+
+
+class DefaultAccountSerializer(serializers.Serializer):
+    pass
 
 
 # <Wayne Shih> 07-Aug-2021

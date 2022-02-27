@@ -15,6 +15,7 @@
 #    Date      Name                    Description of Change
 # 08-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
+# 27-Feb-2022  Wayne Shih              Add DefaultFriendshipSerializer
 # $HISTORY$
 # =================================================================================================
 
@@ -23,6 +24,10 @@ from rest_framework import serializers
 
 from accounts.api.serializers import UserSerializerForFriendship
 from friendships.models import Friendship
+
+
+class DefaultFriendshipSerializer(serializers.Serializer):
+    pass
 
 
 class FollowerSerializer(serializers.ModelSerializer):

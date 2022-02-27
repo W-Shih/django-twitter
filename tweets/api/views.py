@@ -15,6 +15,7 @@
 # 27-Nov-2021  Wayne Shih              Add retrieve api
 # 27-Nov-2021  Wayne Shih              Enhance api by prefetch_related and decorator
 # 23-Feb-2022  Wayne Shih              Add TODO: to enhance list api by django-filters
+# 27-Feb-2021  Wayne Shih              Enhance api by decorator
 # $HISTORY$
 # =================================================================================================
 
@@ -82,6 +83,7 @@ class TweetViewSet(viewsets.GenericViewSet):
     # <Wayne Shih> 06-Sep-2021
     # URL:
     # - POST /api/tweets/
+    @required_params(method='POST', params=['content'])
     def create(self, request: Request):
         serializer = TweetSerializerForCreate(data=request.data, context={'request': request})
         if not serializer.is_valid():

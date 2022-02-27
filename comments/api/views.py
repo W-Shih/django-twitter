@@ -17,6 +17,7 @@
 # 27-Nov-2021  Wayne Shih              Enhance comments list api by decorator
 # 23-Feb-2022  Wayne Shih              Enhance comments list api by django-filters: filterset_class
 # 24-Feb-2022  Wayne Shih              Fix pylint
+# 27-Feb-2021  Wayne Shih              Enhance api by decorator and get_serializer_class()
 # $HISTORY$
 # =================================================================================================
 
@@ -33,6 +34,7 @@ from comments.api.serializers import (
     CommentSerializer,
     CommentSerializerForCreate,
     CommentSerializerForUpdate,
+    DefaultCommentSerializer,
 )
 from comments.models import Comment
 from utils.decorators import required_params
@@ -52,7 +54,6 @@ class CommentFilter(django_filters.rest_framework.FilterSet):
 
 class CommentViewSet(viewsets.GenericViewSet):
     queryset = Comment.objects.all()
-    serializer_class = CommentSerializerForCreate
     filterset_class = CommentFilter
 
     def get_permissions(self):
@@ -61,6 +62,13 @@ class CommentViewSet(viewsets.GenericViewSet):
         if self.action in ['update', 'destroy']:
             return [IsAuthenticated(), IsObjectOwner()]
         return [AllowAny()]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CommentSerializerForCreate
+        if self.action == 'update':
+            return CommentSerializerForUpdate
+        return DefaultCommentSerializer
 
     # <Wayne Shih> 25-Nov-2021
     # django-filter
@@ -89,13 +97,9 @@ class CommentViewSet(viewsets.GenericViewSet):
     # <Wayne Shih> 06-Nov-2021
     # URL:
     # - POST /api/comments/
+    @required_params(method='POST', params=['tweet_id', 'content'])
     def create(self, request: Request):
-        data = {
-            'user_id': request.user.id,
-            'tweet_id': request.data.get('tweet_id'),
-            'content': request.data.get('content'),
-        }
-        serializer = CommentSerializerForCreate(data=data)
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
             return Response({
                 'success': False,
@@ -120,10 +124,11 @@ class CommentViewSet(viewsets.GenericViewSet):
     # URL:
     # - PUT /api/comments/{pk}/
     # Typically use PUT to perform partial update.
+    @required_params(method='PUT', params=['content'])
     def update(self, request, *args, **kwargs):
         comment = self.get_object()
         data = {'content': request.data.get('content')}
-        serializer = CommentSerializerForUpdate(instance=comment, data=data)
+        serializer = self.get_serializer(instance=comment, data=data)
         if not serializer.is_valid():
             return Response({
                 'success': False,

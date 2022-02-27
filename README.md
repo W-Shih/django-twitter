@@ -9,7 +9,7 @@ File description:
 24-Aug-2021  Wayne Shih              Initial create and add badges
 17-Oct-2021  Wayne Shih              Add codacy badges
 06-Nov-2021  Wayne Shih              Add pylint badge
-26-Feb-2022  Wayne Shih              Update pylint score
+27-Feb-2022  Wayne Shih              Update pylint score
 $HISTORY$
 ================================================================================================-->
 
