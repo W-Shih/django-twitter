@@ -14,6 +14,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 26-Feb-2021  Wayne Shih              Initial create
+# 05-Mar-2022  Wayne Shih              Add LikeSerializerForCancel for like cancel api
 # $HISTORY$
 # =================================================================================================
 
@@ -35,7 +36,7 @@ class LikeSerializer(serializers.ModelSerializer):
         fields = ('user', 'created_at')
 
 
-class LikeSerializerForCreate(serializers.ModelSerializer):
+class BaseLikeSerializerForCreateAndCancel(serializers.ModelSerializer):
     content_type = serializers.ChoiceField(choices=['tweet', 'comment'])
 
     class Meta:
@@ -64,6 +65,9 @@ class LikeSerializerForCreate(serializers.ModelSerializer):
             })
         return data
 
+
+class LikeSerializerForCreate(BaseLikeSerializerForCreateAndCancel):
+
     # <Wayne Shih> 25-Feb-2022
     # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
     # content_type is recorded in django_content_type table.
@@ -77,3 +81,21 @@ class LikeSerializerForCreate(serializers.ModelSerializer):
             object_id=validated_data['object_id'],
         )
         return like
+
+
+class LikeSerializerForCancel(BaseLikeSerializerForCreateAndCancel):
+
+    # <Wayne Shih> 05-Mar-2022
+    # TODO:
+    #  What if somehow cancel comes before create?
+    #  - In this case, need to cache users have canceled which likes,
+    #    then before creating a like, need to check cache first.
+    def cancel(self):
+        model_class = self._get_model_class(self.validated_data)
+        num_deleted, _ = Like.objects.filter(
+            user_id=self.context['request'].user.id,
+            content_type=ContentType.objects.get_for_model(model_class),
+            object_id=self.validated_data['object_id'],
+        ).delete()
+
+        return num_deleted
