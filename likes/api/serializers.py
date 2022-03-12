@@ -15,6 +15,7 @@
 #    Date      Name                    Description of Change
 # 26-Feb-2021  Wayne Shih              Initial create
 # 05-Mar-2022  Wayne Shih              Add LikeSerializerForCancel for like cancel api
+# 12-Mar-2022  Wayne Shih              Update comments
 # $HISTORY$
 # =================================================================================================
 
@@ -88,7 +89,7 @@ class LikeSerializerForCancel(BaseLikeSerializerForCreateAndCancel):
     # <Wayne Shih> 05-Mar-2022
     # TODO:
     #  What if somehow cancel comes before create?
-    #  - In this case, need to cache users have canceled which likes,
+    #  - In this case, need to cache users canceled which likes with timestamps,
     #    then before creating a like, need to check cache first.
     def cancel(self):
         model_class = self._get_model_class(self.validated_data)

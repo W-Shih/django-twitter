@@ -10,6 +10,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 04-Nov-2021  Wayne Shih              Initial create
+# 12-Mar-2022  Wayne Shih              React to tweet serializer changes
 # $HISTORY$
 # =================================================================================================
 
@@ -35,6 +36,7 @@ class NewsFeedViewSet(viewsets.GenericViewSet):
     # - @action can't apply on key word methods - list/retrieve/create/update/destroy
     def list(self, request):
         newsfeeds = self.get_queryset().order_by('-created_at')
+        serializer = NewsFeedSerializer(newsfeeds, many=True, context={'request': request})
         return Response({
-            'newsfeeds': NewsFeedSerializer(newsfeeds, many=True).data,
+            'newsfeeds': serializer.data,
         }, status=status.HTTP_200_OK)

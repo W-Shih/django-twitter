@@ -16,6 +16,7 @@
 # 27-Nov-2021  Wayne Shih              Enhance api by prefetch_related and decorator
 # 23-Feb-2022  Wayne Shih              Add TODO: to enhance list api by django-filters
 # 27-Feb-2021  Wayne Shih              Enhance api by decorator
+# 12-Mar-2022  Wayne Shih              React to serializer changes
 # $HISTORY$
 # =================================================================================================
 
@@ -29,7 +30,7 @@ from newsfeeds.services import NewsFeedService
 from tweets.api.serializers import (
     TweetSerializer,
     TweetSerializerForCreate,
-    TweetSerializerWithComments,
+    TweetSerializerForDetail,
 )
 from tweets.models import Tweet
 from utils.decorators import required_params
@@ -57,7 +58,8 @@ class TweetViewSet(viewsets.GenericViewSet):
     # - GET /api/tweets/{pk}/
     def retrieve(self, request: Request, *args, **kwargs):
         tweet = self.get_object()
-        return Response(TweetSerializerWithComments(tweet).data, status=status.HTTP_200_OK)
+        serializer = TweetSerializerForDetail(tweet, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     # <Wayne Shih> 06-Sep-2021
     # URL:
@@ -76,9 +78,12 @@ class TweetViewSet(viewsets.GenericViewSet):
         #   Here could be enhanced by django-filters
         tweets = Tweet.objects.filter(user_id=user_id).prefetch_related('user')
         # print('--- sql --- \n{}'.format(tweets.query))
-        return Response({
-            'tweets': TweetSerializer(tweets, many=True).data,
-        }, status=status.HTTP_200_OK)
+        serializer = TweetSerializer(
+            tweets,
+            many=True,
+            context={'request': request},
+        )
+        return Response({'tweets': serializer.data}, status=status.HTTP_200_OK)
 
     # <Wayne Shih> 06-Sep-2021
     # URL:
@@ -97,4 +102,7 @@ class TweetViewSet(viewsets.GenericViewSet):
         # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
         tweet = serializer.save()
         NewsFeedService.fanout_to_followers(tweet)
-        return Response(TweetSerializer(tweet).data, status=status.HTTP_201_CREATED)
+        return Response(
+            TweetSerializer(tweet, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )

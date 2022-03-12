@@ -17,6 +17,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Nov-2021  Wayne Shih              Add TweetSerializerWithComments for tweet retrieve api
 # 27-Nov-2021  Wayne Shih              Use SerializerMethodField instead to prefetch for comments
+# 12-Mar-2022  Wayne Shih              Insert likes to tweet serializers
 # $HISTORY$
 # =================================================================================================
 
@@ -25,18 +26,40 @@ from rest_framework import serializers
 
 from accounts.api.serializers import UserSerializerForTweet
 from comments.api.serializers import CommentSerializer
+from likes.api.serializers import LikeSerializer
+from likes.services import LikeService
 from tweets.models import Tweet
 
 
 class TweetSerializer(serializers.ModelSerializer):
     user = UserSerializerForTweet()
+    comments_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    has_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Tweet
-        fields = ('id', 'user', 'created_at', 'content')
+        fields = (
+            'id',
+            'user',
+            'created_at',
+            'content',
+            'comments_count',
+            'likes_count',
+            'has_liked',
+        )
+
+    def get_comments_count(self, obj):
+        return obj.comment_set.count()
+
+    def get_likes_count(self, obj):
+        return obj.like_set.count()
+
+    def get_has_liked(self, obj):
+        return LikeService.get_has_liked(self.context['request'].user, obj)
 
 
-class TweetSerializerWithComments(TweetSerializer):
+class TweetSerializerForDetail(TweetSerializer):
     # <Wayne Shih> 26-Nov-2021
     # - https://docs.djangoproject.com/en/3.2/topics/db/queries/#following-relationships-backward
     # - https://www.django-rest-framework.org/api-guide/fields/#using-source
@@ -46,15 +69,33 @@ class TweetSerializerWithComments(TweetSerializer):
     # <Wayne Shih> 27-Nov-2021
     # Use SerializerMethodField instead in order to prefetch_related for comments
     comments = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
 
     class Meta:
         model = Tweet
-        fields = ('id', 'user', 'created_at', 'content', 'comments')
+        fields = (
+            'id',
+            'user',
+            'created_at',
+            'content',
+            'comments',
+            'comments_count',
+            'likes',
+            'likes_count',
+            'has_liked',
+        )
 
     def get_comments(self, obj):
         return CommentSerializer(
             obj.comment_set.all().prefetch_related('user'),
-            many=True
+            many=True,
+            context={'request': self.context['request']},
+        ).data
+
+    def get_likes(self, obj):
+        return LikeSerializer(
+            obj.like_set.all().prefetch_related('user'),
+            many=True,
         ).data
 
 

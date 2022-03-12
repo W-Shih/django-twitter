@@ -18,6 +18,7 @@
 # 23-Feb-2022  Wayne Shih              Enhance comments list api by django-filters: filterset_class
 # 24-Feb-2022  Wayne Shih              Fix pylint
 # 27-Feb-2021  Wayne Shih              Enhance api by decorator and get_serializer_class()
+# 12-Mar-2022  Wayne Shih              React to serializer changes
 # $HISTORY$
 # =================================================================================================
 
@@ -89,9 +90,10 @@ class CommentViewSet(viewsets.GenericViewSet):
         comments = self.filter_queryset(queryset)\
             .prefetch_related('user')\
             .order_by('created_at')
+        serializer = CommentSerializer(comments, many=True, context={'request': request})
 
         return Response({
-            'comments': CommentSerializer(comments, many=True).data,
+            'comments': serializer.data,
         }, status=status.HTTP_200_OK)
 
     # <Wayne Shih> 06-Nov-2021
@@ -108,7 +110,10 @@ class CommentViewSet(viewsets.GenericViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         comment = serializer.save()
-        return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+        return Response(
+            CommentSerializer(comment, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     # <Wayne Shih> 08-Nov-2021
     # URL:
@@ -137,4 +142,7 @@ class CommentViewSet(viewsets.GenericViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
-        return Response(CommentSerializer(comment).data, status=status.HTTP_200_OK)
+        return Response(
+            CommentSerializer(comment, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )

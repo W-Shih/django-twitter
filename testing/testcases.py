@@ -14,6 +14,7 @@
 # 04-Nov-2021  Wayne Shih              Add create_comment
 # 24-Feb-2022  Wayne Shih              Add create_like
 # 26-Feb-2022  Wayne Shih              Add create_user_and_auth_client
+# 12-Mar-2022  Wayne Shih              Add create_newsfeed
 # $HISTORY$
 # =================================================================================================
 
@@ -25,6 +26,7 @@ from rest_framework.test import APIClient
 
 from comments.models import Comment
 from likes.models import Like
+from newsfeeds.models import NewsFeed
 from tweets.models import Tweet
 
 
@@ -76,3 +78,6 @@ class TestCase(DjangoTestCase):
         client = APIClient()
         client.force_authenticate(user)
         return user, client
+
+    def create_newsfeed(self, user, tweet):
+        return NewsFeed.objects.create(user=user, tweet=tweet)
