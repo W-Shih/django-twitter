@@ -16,6 +16,7 @@
 # 06-Nov-2021  Wayne Shih              Initial create
 # 13-Nov-2021  Wayne Shih              Add CommentSerializerForUpdate and some comments
 # 27-Feb-2022  Wayne Shih              Enhance CommentSerializerForCreate() and add DefaultCommentSerializer
+# 12-Mar-2022  Wayne Shih              Insert likes_count and has_liked to comment serializer
 # $HISTORY$
 # =================================================================================================
 
@@ -24,6 +25,7 @@ from rest_framework import serializers
 
 from accounts.api.serializers import UserSerializerForComment
 from comments.models import Comment
+from likes.services import LikeService
 from tweets.models import Tweet
 
 
@@ -33,10 +35,26 @@ class DefaultCommentSerializer(serializers.Serializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializerForComment()
+    likes_count = serializers.SerializerMethodField()
+    has_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ('id', 'tweet_id', 'user', 'content', 'created_at')
+        fields = (
+            'id',
+            'tweet_id',
+            'user',
+            'content',
+            'created_at',
+            'likes_count',
+            'has_liked',
+        )
+
+    def get_likes_count(self, obj):
+        return obj.like_set.count()
+
+    def get_has_liked(self, obj):
+        return LikeService.get_has_liked(self.context['request'].user, obj)
 
 
 class CommentSerializerForCreate(serializers.ModelSerializer):

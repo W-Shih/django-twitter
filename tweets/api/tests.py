@@ -13,6 +13,7 @@
 # 27-Nov-2021  Wayne Shih              Add tests for tweet retrieve api
 # 27-Nov-2021  Wayne Shih              React to decorator enhancement
 # 23-Feb-2022  Wayne Shih              Add a test for tweet list api
+# 12-Mar-2022  Wayne Shih              React to serializer changes
 # $HISTORY$
 # =================================================================================================
 
@@ -74,7 +75,7 @@ class TweetApiTests(TestCase):
         self.assertEqual(len(tweets), 3)
         self.assertEqual(
             set(tweets[0].keys()),
-            {'id', 'user', 'created_at', 'content'}
+            {'id', 'user', 'created_at', 'content', 'comments_count', 'has_liked', 'likes_count'}
         )
         # <Wayne Shih> 06-Sep-2021
         # test order by '-created_at'
@@ -131,7 +132,7 @@ class TweetApiTests(TestCase):
         })
         self.assertEqual(
             set(response.data.keys()),
-            {'id', 'user', 'created_at', 'content'}
+            {'id', 'user', 'created_at', 'content', 'comments_count', 'has_liked', 'likes_count'}
         )
 
     def test_retrieve_api(self):
@@ -147,8 +148,18 @@ class TweetApiTests(TestCase):
         response = self.anonymous_client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            response.json().keys(),
-            {'id', 'user', 'comments', 'created_at', 'content'}
+            set(response.json().keys()),
+            {
+                'id',
+                'user',
+                'created_at',
+                'content',
+                'comments_count',
+                'has_liked',
+                'likes_count',
+                'comments',
+                'likes',
+            }
         )
         self.assertEqual(response.json().get('user').keys(), {'id', 'username'})
         self.assertEqual(isinstance(response.json().get('comments'), list), True)
@@ -165,8 +176,8 @@ class TweetApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['comments']), 2)
         self.assertEqual(
-            response.json().get('comments')[0].keys(),
-            {'id', 'tweet_id', 'user', 'content', 'created_at'}
+            set(response.json().get('comments')[0].keys()),
+            {'id', 'tweet_id', 'user', 'content', 'created_at', 'has_liked', 'likes_count'}
         )
         self.assertEqual(response.data['comments'][0]['user']['username'], self.user1.username)
         self.assertEqual(response.data['comments'][1]['user']['username'], self.user2.username)

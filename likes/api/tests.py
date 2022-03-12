@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 26-Feb-2022  Wayne Shih              Initial create
 # 05-Mar-2022  Wayne Shih              Add tests for like cancel and list APIs
+# 12-Mar-2022  Wayne Shih              Add tests for likes in tweets and comments
 # $HISTORY$
 # =================================================================================================
 
@@ -23,6 +24,10 @@ from testing.testcases import TestCase
 DRF_LIKE_API_URL = '/api/likes/'
 LIKE_BASE_URL = '/api/likes/'
 LIKE_CANCEL_URL = '/api/likes/cancel/'
+COMMENT_LIST_URL = '/api/comments/'
+TWEET_DETAIL_URL = '/api/tweets/{}/'
+TWEET_LIST_URL = '/api/tweets/'
+NEWSFEED_LIST_URL = '/api/newsfeeds/'
 
 
 class LikeApiTests(TestCase):
@@ -270,3 +275,93 @@ class LikeApiTests(TestCase):
         self.assertEqual(response.data['num_deleted'], 0)
         self.assertEqual(Like.objects.count(), 1)
         self.assertEqual(self.kd35_comment.like_set.count(), 1)
+
+    def test_likes_in_comments(self):
+        # <Wayne Shih> 12-Mar-2022
+        # This test is to test likes in CommentSerializer
+        #
+        # test COMMENT_LIST_URL for a given tweet
+        # test anonymous
+        response = self.anonymous_client.get(COMMENT_LIST_URL, {
+            'tweet_id': self.lbj23_tweet.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 0)
+        self.assertEqual(response.data['comments'][0]['has_liked'], False)
+
+        # test log-in user
+        response = self.lbj23_client.get(COMMENT_LIST_URL, {
+            'tweet_id': self.lbj23_tweet.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['has_liked'], False)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 0)
+        self.create_like(self.lbj23, self.kd35_comment)
+        response = self.lbj23_client.get(COMMENT_LIST_URL, {
+            'tweet_id': self.lbj23_tweet.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['has_liked'], True)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 1)
+
+        # test COMMENT_LIST_URL for a given user
+        response = self.anonymous_client.get(COMMENT_LIST_URL, {
+            'user_id': self.kd35.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 1)
+        self.assertEqual(response.data['comments'][0]['has_liked'], False)
+
+        # test likes in comments for a given TWEET_DETAIL_URL
+        self.create_like(self.kd35, self.kd35_comment)
+        url = TWEET_DETAIL_URL.format(self.lbj23_tweet.id)
+        response = self.lbj23_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 2)
+        self.assertEqual(response.data['comments'][0]['has_liked'], True)
+
+    def test_likes_in_tweets(self):
+        # <Wayne Shih> 12-Mar-2022
+        # This test is to test likes in TweetSerializer and TweetSerializerForDetail
+        #
+        # test TWEET_LIST_URL
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': self.lbj23.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['tweets'][0]['likes_count'], 0)
+        self.assertEqual(response.data['tweets'][0]['has_liked'], False)
+
+        self.create_like(self.lbj23, self.lbj23_tweet)
+        response = self.lbj23_client.get(TWEET_LIST_URL, {
+            'user_id': self.lbj23.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['tweets'][0]['likes_count'], 1)
+        self.assertEqual(response.data['tweets'][0]['has_liked'], True)
+
+        # lbj re-liked the same comment
+        self.create_like(self.lbj23, self.lbj23_tweet)
+        response = self.kd35_client.get(TWEET_LIST_URL, {
+            'user_id': self.lbj23.id
+        })
+        self.assertEqual(response.data['tweets'][0]['likes_count'], 1)
+        self.assertEqual(response.data['tweets'][0]['has_liked'], False)
+
+        # test NEWSFEED_LIST_URL
+        self.create_like(self.kd35, self.lbj23_tweet)
+        self.create_newsfeed(self.kd35, self.lbj23_tweet)
+        response = self.kd35_client.get(NEWSFEED_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['newsfeeds'][0]['tweet']['likes_count'], 2)
+        self.assertEqual(response.data['newsfeeds'][0]['tweet']['has_liked'], True)
+
+        # test likes and their detail in tweet detail
+        url = TWEET_DETAIL_URL.format(self.lbj23_tweet.id)
+        response = self.lbj23_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['has_liked'], True)
+        self.assertEqual(response.data['likes_count'], 2)
+        self.assertEqual(len(response.data['likes']), 2)
+        self.assertEqual(response.data['likes'][0]['user']['id'], self.kd35.id)
+        self.assertEqual(response.data['likes'][1]['user']['id'], self.lbj23.id)

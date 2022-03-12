@@ -13,6 +13,7 @@
 # 25-Nov-2021  Wayne Shih              Add more tests for comments list api
 # 23-Feb-2022  Wayne Shih              React to enhancement by django-filters: filterset_class
 # 27-Feb-2022  Wayne Shih              React to enhancement by decorator and add tests for update
+# 12-Mar-2022  Wayne Shih              React to serializer changes and add tests for comments_count
 # $HISTORY$
 # =================================================================================================
 
@@ -28,6 +29,9 @@ from testing.testcases import TestCase
 # URL MUST end with '/', OW, status_code will become 301
 COMMENT_URL = '/api/comments/'
 COMMENT_DETAIL_URL = '/api/comments/{}/'
+TWEET_DETAIL_URL = '/api/tweets/{}/'
+TWEET_LIST_URL = '/api/tweets/'
+NEWSFEED_LIST_URL = '/api/newsfeeds/'
 
 
 class CommentApiTests(TestCase):
@@ -101,7 +105,7 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['content'], 'Good 4 u, my bro!')
         self.assertEqual(
             set(response.data.keys()),
-            {'id', 'tweet_id', 'user', 'created_at', 'content'}
+            {'id', 'tweet_id', 'user', 'created_at', 'content', 'has_liked', 'likes_count'}
         )
 
         non_existing_tweet_id = 1000
@@ -186,7 +190,7 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             set(response.data.keys()),
-            {'id', 'tweet_id', 'user', 'created_at', 'content'}
+            {'id', 'tweet_id', 'user', 'created_at', 'content', 'has_liked', 'likes_count'}
         )
         # <Wayne Shih> 13-Nov-2021
         # Make sure comment object is the latest from db, not from cache
@@ -308,3 +312,25 @@ class CommentApiTests(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['comments']), 2)
+
+    def test_comments_count(self):
+        # test TWEET_DETAIL_URL
+        url = TWEET_DETAIL_URL.format(self.tweet.id)
+        response = self.kd35_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments_count'], 0)
+
+        # test TWEET_LIST_URL
+        self.create_comment(self.kd35, self.tweet)
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': self.lbj23.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['tweets'][0]['comments_count'], 1)
+
+        # test NEWSFEED_LIST_URL
+        self.create_comment(self.lbj23, self.tweet)
+        self.create_newsfeed(self.kd35, self.tweet)
+        response = self.kd35_client.get(NEWSFEED_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['newsfeeds'][0]['tweet']['comments_count'], 2)
