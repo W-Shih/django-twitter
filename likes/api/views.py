@@ -11,6 +11,7 @@
 #    Date      Name                    Description of Change
 # 26-Feb-2022  Wayne Shih              Initial create
 # 05-Mar-2022  Wayne Shih              Add like cancel and list APIs
+# 12-Mar-2022  Wayne Shih              Trigger notification when create a like
 # $HISTORY$
 # =================================================================================================
 
@@ -21,6 +22,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from inbox.services import NotificationService
 from likes.models import Like
 from likes.api.serializers import (
     BaseLikeSerializerForCreateAndCancel,
@@ -70,7 +72,9 @@ class LikeViewSet(viewsets.GenericViewSet):
                 'errors': serializer.errors,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        like = serializer.save()
+        like, is_created = serializer.get_or_create()
+        if is_created:
+            NotificationService.send_like_notification(like)
         return Response(LikeSerializer(like).data, status=status.HTTP_201_CREATED)
 
     # <Wayne Shih> 05-Mar-2022

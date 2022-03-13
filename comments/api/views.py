@@ -19,6 +19,7 @@
 # 24-Feb-2022  Wayne Shih              Fix pylint
 # 27-Feb-2021  Wayne Shih              Enhance api by decorator and get_serializer_class()
 # 12-Mar-2022  Wayne Shih              React to serializer changes
+# 12-Mar-2022  Wayne Shih              Trigger notification when create a comment
 # $HISTORY$
 # =================================================================================================
 
@@ -38,6 +39,7 @@ from comments.api.serializers import (
     DefaultCommentSerializer,
 )
 from comments.models import Comment
+from inbox.services import NotificationService
 from utils.decorators import required_params
 
 
@@ -110,6 +112,7 @@ class CommentViewSet(viewsets.GenericViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         comment = serializer.save()
+        NotificationService.send_comment_notification(comment)
         return Response(
             CommentSerializer(comment, context={'request': request}).data,
             status=status.HTTP_201_CREATED,

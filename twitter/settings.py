@@ -18,6 +18,7 @@
 # 06-Nov-2021  Wayne Shih              Add local_settings
 # 25-Nov-2021  Wayne Shih              Add django_filters
 # 24-Feb-2022  Wayne Shih              Add likes
+# 12-Mar-2022  Wayne Shih              Add notifications and inbox
 # $HISTORY$
 # =================================================================================================
 
@@ -72,6 +73,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'debug_toolbar',  # Django-Debug-Toolbar
     'django_filters',
+    'notifications',
 
     # project apps
     'accounts',
@@ -80,6 +82,7 @@ INSTALLED_APPS = [
     'newsfeeds',
     'comments',
     'likes',
+    'inbox',
 ]
 
 REST_FRAMEWORK = {
