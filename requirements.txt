@@ -5,3 +5,4 @@ django-debug-toolbar==3.2.1
 coverage==5.5
 pylint==2.11.1
 django-filter==21.1
+django-notifications-hq==1.7.0

@@ -16,6 +16,7 @@
 # 26-Feb-2021  Wayne Shih              Initial create
 # 05-Mar-2022  Wayne Shih              Add LikeSerializerForCancel for like cancel api
 # 12-Mar-2022  Wayne Shih              Update comments
+# 12-Mar-2022  Wayne Shih              Update create to get_or_create
 # $HISTORY$
 # =================================================================================================
 
@@ -74,14 +75,15 @@ class LikeSerializerForCreate(BaseLikeSerializerForCreateAndCancel):
     # content_type is recorded in django_content_type table.
     # get_for_model() here is to get model's metadata so that db knows the model.
     # - https://docs.djangoproject.com/en/4.0/ref/contrib/contenttypes/#django.contrib.contenttypes.models.ContentTypeManager.get_for_model
-    def create(self, validated_data):
+    def get_or_create(self):
+        validated_data = self.validated_data
         model_class = self._get_model_class(validated_data)
-        like, _ = Like.objects.get_or_create(
+        like, is_created = Like.objects.get_or_create(
             user_id=self.context['request'].user.id,
             content_type=ContentType.objects.get_for_model(model_class),
             object_id=validated_data['object_id'],
         )
-        return like
+        return like, is_created
 
 
 class LikeSerializerForCancel(BaseLikeSerializerForCreateAndCancel):
