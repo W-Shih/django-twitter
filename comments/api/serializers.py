@@ -17,6 +17,7 @@
 # 13-Nov-2021  Wayne Shih              Add CommentSerializerForUpdate and some comments
 # 27-Feb-2022  Wayne Shih              Enhance CommentSerializerForCreate() and add DefaultCommentSerializer
 # 12-Mar-2022  Wayne Shih              Insert likes_count and has_liked to comment serializer
+# 17-Mar-2022  Wayne Shih              Add CommentSerializerForNotifications
 # $HISTORY$
 # =================================================================================================
 
@@ -93,3 +94,15 @@ class CommentSerializerForUpdate(serializers.ModelSerializer):
         instance.content = validated_data['content']
         instance.save()
         return instance
+
+
+class CommentSerializerForNotifications(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = (
+            'id',
+            'tweet_id',
+            'content',
+            'created_at',
+        )

@@ -18,6 +18,7 @@
 # 27-Nov-2021  Wayne Shih              Add TweetSerializerWithComments for tweet retrieve api
 # 27-Nov-2021  Wayne Shih              Use SerializerMethodField instead to prefetch for comments
 # 12-Mar-2022  Wayne Shih              Insert likes to tweet serializers
+# 17-Mar-2022  Wayne Shih              Add TweetSerializerForNotifications
 # $HISTORY$
 # =================================================================================================
 
@@ -113,3 +114,14 @@ class TweetSerializerForCreate(serializers.ModelSerializer):
         content = validated_data['content']
         tweet = Tweet.objects.create(user_id=user_id, content=content)
         return tweet
+
+
+class TweetSerializerForNotifications(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tweet
+        fields = (
+            'id',
+            'content',
+            'created_at',
+        )
