@@ -2,7 +2,7 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
-#       - Serializer for comments api
+#       - Serializer for likes api
 #
 #       - Serializers allow complex data such as querysets and model instances to be converted to
 #         native Python datatypes that can then be easily rendered into JSON, XML or other content
@@ -13,10 +13,11 @@
 #
 # =================================================================================================
 #    Date      Name                    Description of Change
-# 26-Feb-2021  Wayne Shih              Initial create
+# 26-Feb-2022  Wayne Shih              Initial create
 # 05-Mar-2022  Wayne Shih              Add LikeSerializerForCancel for like cancel api
 # 12-Mar-2022  Wayne Shih              Update comments
 # 12-Mar-2022  Wayne Shih              Update create to get_or_create
+# 17-Mar-2022  Wayne Shih              Update history and comments
 # $HISTORY$
 # =================================================================================================
 

@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 12-Mar-2022  Wayne Shih              Initial create
+# 17-Mar-2022  Wayne Shih              Update verb strings for front-end to render hyperlinks
 # $HISTORY$
 # =================================================================================================
 
@@ -26,7 +27,7 @@ class NotificationService(object):
             return
         notify.send(
             sender=comment.user,
-            verb='commented on your tweet',
+            verb='commented on your tweet {target_link_to_render}',
             target=comment.tweet,
             recipient=comment.tweet.user,
         )
@@ -45,7 +46,7 @@ class NotificationService(object):
 
         notify.send(
             sender=like.user,
-            verb=f'liked on your {content_type}',
+            verb=f'liked on your {content_type} {"{target_link_to_render}"}',
             target=target,
             recipient=target.user,
         )
