@@ -7,7 +7,8 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 12-Mar-2022  Wayne Shih              Initial create
-# 17-Mar-2022  Wayne Shih              Add notification api tests
+# 17-Mar-2022  Wayne Shih              Add notifications api tests
+# 19-Mar-2022  Wayne Shih              Add tests for notifications update api
 # $HISTORY$
 # =================================================================================================
 
@@ -23,6 +24,7 @@ from testing.testcases import TestCase
 COMMENT_BASE_URL = '/api/comments/'
 LIKE_BASE_URL = '/api/likes/'
 NOTIFICATION_BASE_URL = '/api/notifications/'
+NOTIFICATION_DETAIL_URL = '/api/notifications/{}/'
 
 
 class NotificationTests(TestCase):
@@ -177,6 +179,75 @@ class NotificationApiTests(TestCase):
         response = self.kd35_client.get(NOTIFICATION_BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['notifications']), 1)
+
+    def test_update(self):
+        self.kd35_client.post(COMMENT_BASE_URL, {
+            'tweet_id': self.lbj23_tweet.id,
+            'content': 'Good job, my bro! I am going to Worries BTW'
+        })
+        self.kd35_client.post(LIKE_BASE_URL, {
+            'content_type': 'tweet',
+            'object_id': self.lbj23_tweet.id,
+        })
+        notification = Notification.objects.filter(recipient=self.lbj23).first()
+        url = NOTIFICATION_DETAIL_URL.format(notification.id)
+        unread_count_url = NOTIFICATION_BASE_URL + 'unread-count/'
+
+        # Not log-in  <Wayne Shih> 19-Mar-2022
+        response = self.anonymous_client.put(url, {'unread': False})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # kd35 is not the notification owner  <Wayne Shih> 19-Mar-2022
+        response = self.kd35_client.put(url, {'unread': False})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Method not allowed  <Wayne Shih> 19-Mar-2022
+        response = self.lbj23_client.post(url, {'unread': False})
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Missing param  <Wayne Shih> 19-Mar-2022
+        response = self.lbj23_client.put(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors'],
+            'Request is missing param(s): unread. All missing params are required to provide.'
+        )
+
+        # Invalid param  <Wayne Shih> 19-Mar-2022
+        response = self.lbj23_client.put(url, {'unread': 12345})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(response.data['errors']['unread'][0], 'Must be a valid boolean.')
+
+        # mark as read success  <Wayne Shih> 19-Mar-2022
+        response = self.lbj23_client.get(unread_count_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['unread_count'], 2)
+        response = self.lbj23_client.put(url, {'unread': False})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['unread'], False)
+        response = self.lbj23_client.get(unread_count_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['unread_count'], 1)
+
+        # mark as unread success  <Wayne Shih> 19-Mar-2022
+        response = self.lbj23_client.put(url, {'unread': True})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['unread'], True)
+        response = self.lbj23_client.get(unread_count_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['unread_count'], 2)
+
+        # Will not modify fields other than 'unread'
+        verb = notification.verb
+        response = self.lbj23_client.put(url, {'verb': 'fake_verb', 'unread': False})
+        notification.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(notification.verb, verb)
+        self.assertNotEqual(notification.verb, 'fake_verb')
 
     def test_unread_count(self):
         url = NOTIFICATION_BASE_URL + 'unread-count/'

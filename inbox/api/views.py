@@ -10,6 +10,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 13-Mar-2022  Wayne Shih              Initial create
+# 19-Mar-2022  Wayne Shih              Add notifications update api
 # $HISTORY$
 # =================================================================================================
 
@@ -21,18 +22,38 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from inbox.api.serializers import NotificationSerializer, DefaultNotificationSerializer
+from inbox.api.serializers import (
+    DefaultNotificationSerializer,
+    NotificationSerializer,
+    NotificationSerializerForUpdate,
+)
+from utils.decorators import required_params
+from utils.permissions import IsObjectOwner
 
 
 class NotificationViewSet(viewsets.GenericViewSet):
     queryset = Notification.objects.all()
-    serializer_class = DefaultNotificationSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsObjectOwner,)
     # <Wayne Shih> 15-Mar-2022
     # filterset_fields is a shortcut for filterset_class
     # https://django-filter.readthedocs.io/en/latest/guide/rest_framework.html#adding-a-filterset-with-filterset-class
     # https://django-filter.readthedocs.io/en/latest/guide/rest_framework.html#using-the-filterset-fields-shortcut
     filterset_fields = ('unread',)
+
+    # def get_queryset(self):
+    #     if self.action == 'update':
+    #         return Notification.objects.all()
+    #     return Notification.objects\
+    #         .filter(recipient=self.request.user)\
+    #         .order_by('-timestamp')\
+    #         .prefetch_related('actor', 'target')
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return NotificationSerializer
+        if self.action == 'update':
+            return NotificationSerializerForUpdate
+        return DefaultNotificationSerializer
 
     # <Wayne Shih> 13-Mar-2022
     # URL:
@@ -43,10 +64,31 @@ class NotificationViewSet(viewsets.GenericViewSet):
             .filter(recipient=request.user)\
             .order_by('-timestamp')\
             .prefetch_related('actor', 'target')
-        serializer = NotificationSerializer(notifications, many=True, context={'request': request})
+        serializer = self.get_serializer(notifications, many=True, context={'request': request})
         return Response({
             'notifications': serializer.data,
         }, status=status.HTTP_200_OK)
+
+    # <Wayne Shih> 18-Mar-2022
+    # URL:
+    # - PUT /api/notifications/{pk}/
+    # Typically use PUT to perform partial update.
+    @required_params(method='PUT', params=['unread'])
+    def update(self, request, *args, **kwargs):
+        notification = self.get_object()
+        serializer = self.get_serializer(instance=notification, data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'message': 'Please check input.',
+                'errors': serializer.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        notification = serializer.save()
+        return Response(
+            NotificationSerializer(notification).data,
+            status=status.HTTP_200_OK,
+        )
 
     # <Wayne Shih> 13-Mar-2022
     # URL:

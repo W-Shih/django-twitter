@@ -14,6 +14,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 13-Mar-2022  Wayne Shih              Initial create
+# 19-Mar-2022  Wayne Shih              Add NotificationSerializerForUpdate
 # $HISTORY$
 # =================================================================================================
 
@@ -59,3 +60,17 @@ class NotificationSerializer(serializers.ModelSerializer):
         if obj.actor.__class__ == User:
             return {'user': UserSerializerForNotification(obj.actor).data}
         return None
+
+
+class NotificationSerializerForUpdate(serializers.ModelSerializer):
+
+    class Meta:
+        model = Notification
+        fields = ('unread',)
+
+    # <Wayne Shih> 18-Mar-2022
+    # - https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
+    def update(self, instance, validated_data):
+        instance.unread = validated_data['unread']
+        instance.save()
+        return instance
