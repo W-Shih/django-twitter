@@ -9,6 +9,7 @@
 # 12-Mar-2022  Wayne Shih              Initial create
 # 17-Mar-2022  Wayne Shih              Add notifications api tests
 # 19-Mar-2022  Wayne Shih              Add tests for notifications update api
+# 19-Mar-2022  Wayne Shih              React to notifications list api change by ListModelMixin
 # $HISTORY$
 # =================================================================================================
 
@@ -83,7 +84,7 @@ class NotificationApiTests(TestCase):
 
         # login user lbj23 has 0 notifications  <Wayne Shih> 15-Mar-2022
         response = self.lbj23_client.get(NOTIFICATION_BASE_URL)
-        self.assertEqual(len(response.data['notifications']), 0)
+        self.assertEqual(len(response.data['results']), 0)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # login user lbj23 has 2 notifications  <Wayne Shih> 15-Mar-2022
@@ -98,30 +99,30 @@ class NotificationApiTests(TestCase):
 
         response = self.lbj23_client.get(NOTIFICATION_BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['notifications']), 2)
+        self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(
-            response.data['notifications'][0]['timestamp'] >
-            response.data['notifications'][1]['timestamp'],
+            response.data['results'][0]['timestamp'] >
+            response.data['results'][1]['timestamp'],
             True
         )
-        self.assertEqual(response.data['notifications'][0]['unread'], True)
-        self.assertEqual(response.data['notifications'][1]['unread'], True)
-        self.assertEqual(response.data['notifications'][0]['actor']['user']['id'], self.kd35.id)
-        self.assertEqual(response.data['notifications'][1]['actor']['user']['id'], self.kd35.id)
+        self.assertEqual(response.data['results'][0]['unread'], True)
+        self.assertEqual(response.data['results'][1]['unread'], True)
+        self.assertEqual(response.data['results'][0]['actor']['user']['id'], self.kd35.id)
+        self.assertEqual(response.data['results'][1]['actor']['user']['id'], self.kd35.id)
         self.assertEqual(
-            'commented on your tweet' in response.data['notifications'][0]['verb'],
-            True
-        )
-        self.assertEqual(
-            'liked on your tweet' in response.data['notifications'][1]['verb'],
+            'commented on your tweet' in response.data['results'][0]['verb'],
             True
         )
         self.assertEqual(
-            response.data['notifications'][0]['target']['tweet']['id'],
+            'liked on your tweet' in response.data['results'][1]['verb'],
+            True
+        )
+        self.assertEqual(
+            response.data['results'][0]['target']['tweet']['id'],
             self.lbj23_tweet.id
         )
         self.assertEqual(
-            response.data['notifications'][1]['target']['tweet']['id'],
+            response.data['results'][1]['target']['tweet']['id'],
             self.lbj23_tweet.id
         )
 
@@ -147,18 +148,18 @@ class NotificationApiTests(TestCase):
 
         response = self.lbj23_client.get(NOTIFICATION_BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['notifications']), 2)
+        self.assertEqual(len(response.data['results']), 2)
         response = self.lbj23_client.get(NOTIFICATION_BASE_URL, {'unread': True})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['notifications']), 1)
+        self.assertEqual(len(response.data['results']), 1)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = self.lbj23_client.get(NOTIFICATION_BASE_URL, {'unread': False})
-        self.assertEqual(len(response.data['notifications']), 1)
+        self.assertEqual(len(response.data['results']), 1)
 
         # login user kd35 has 0 notifications  <Wayne Shih> 15-Mar-2022
         response = self.kd35_client.get(NOTIFICATION_BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['notifications']), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
         # <Wayne Shih> 15-Mar-2022
         # login user kd35 likes his own comment and
@@ -169,7 +170,7 @@ class NotificationApiTests(TestCase):
         })
         response = self.kd35_client.get(NOTIFICATION_BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['notifications']), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
         # login user lbj23 likes kd35's comment  <Wayne Shih> 17-Mar-2022
         self.lbj23_client.post(LIKE_BASE_URL, {
@@ -178,7 +179,7 @@ class NotificationApiTests(TestCase):
         })
         response = self.kd35_client.get(NOTIFICATION_BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['notifications']), 1)
+        self.assertEqual(len(response.data['results']), 1)
 
     def test_update(self):
         self.kd35_client.post(COMMENT_BASE_URL, {

@@ -11,6 +11,7 @@
 #    Date      Name                    Description of Change
 # 13-Mar-2022  Wayne Shih              Initial create
 # 19-Mar-2022  Wayne Shih              Add notifications update api
+# 19-Mar-2022  Wayne Shih              Update notifications list api by ListModelMixin
 # $HISTORY$
 # =================================================================================================
 
@@ -31,8 +32,10 @@ from utils.decorators import required_params
 from utils.permissions import IsObjectOwner
 
 
-class NotificationViewSet(viewsets.GenericViewSet):
-    queryset = Notification.objects.all()
+class NotificationViewSet(
+    viewsets.GenericViewSet,
+    viewsets.mixins.ListModelMixin,
+):
     permission_classes = (IsAuthenticated, IsObjectOwner,)
     # <Wayne Shih> 15-Mar-2022
     # filterset_fields is a shortcut for filterset_class
@@ -40,13 +43,15 @@ class NotificationViewSet(viewsets.GenericViewSet):
     # https://django-filter.readthedocs.io/en/latest/guide/rest_framework.html#using-the-filterset-fields-shortcut
     filterset_fields = ('unread',)
 
-    # def get_queryset(self):
-    #     if self.action == 'update':
-    #         return Notification.objects.all()
-    #     return Notification.objects\
-    #         .filter(recipient=self.request.user)\
-    #         .order_by('-timestamp')\
-    #         .prefetch_related('actor', 'target')
+    def get_queryset(self):
+        if self.action == 'list':
+            return Notification.objects\
+                .filter(recipient=self.request.user)\
+                .order_by('-timestamp')\
+                .prefetch_related('actor', 'target')
+        if self.action == 'update':
+            return Notification.objects.all()
+        return Notification.objects.filter(recipient=self.request.user)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -54,20 +59,6 @@ class NotificationViewSet(viewsets.GenericViewSet):
         if self.action == 'update':
             return NotificationSerializerForUpdate
         return DefaultNotificationSerializer
-
-    # <Wayne Shih> 13-Mar-2022
-    # URL:
-    # - GET /api/notifications/
-    def list(self, request: Request):
-        queryset = self.get_queryset()
-        notifications = self.filter_queryset(queryset)\
-            .filter(recipient=request.user)\
-            .order_by('-timestamp')\
-            .prefetch_related('actor', 'target')
-        serializer = self.get_serializer(notifications, many=True, context={'request': request})
-        return Response({
-            'notifications': serializer.data,
-        }, status=status.HTTP_200_OK)
 
     # <Wayne Shih> 18-Mar-2022
     # URL:
@@ -96,7 +87,7 @@ class NotificationViewSet(viewsets.GenericViewSet):
     @action(methods=['GET'], detail=False, url_path='unread-count')
     def unread_count(self, request: Request):
         queryset = self.get_queryset()
-        unread_count = queryset.filter(recipient=request.user, unread=True).count()
+        unread_count = queryset.filter(unread=True).count()
         return Response({'unread_count': unread_count}, status=status.HTTP_200_OK)
 
     # <Wayne Shih> 13-Mar-2022
@@ -108,5 +99,5 @@ class NotificationViewSet(viewsets.GenericViewSet):
         # <Wayne Shih> 13-Mar-2022
         # queryset has its own update() method
         # https://docs.djangoproject.com/en/4.0/ref/models/querysets/#django.db.models.query.QuerySet.update
-        num_updated = queryset.filter(recipient=request.user, unread=True).update(unread=False)
+        num_updated = queryset.filter(unread=True).update(unread=False)
         return Response({'marked_count': num_updated}, status=status.HTTP_200_OK)
