@@ -12,6 +12,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 13-Nov-2021  Wayne Shih              Initial create
+# 19-Mar-2022  Wayne Shih              Move this file to utils, extend has_object_permission, modify some comments
 # $HISTORY$
 # =================================================================================================
 
@@ -19,10 +20,9 @@
 from rest_framework.permissions import BasePermission
 
 
-# <Wayne Shih> 09-Nov-2021
-# This class is for a general purpose to check object owner permission.
-# In the future, if other views need the same check, then this class can be
-# moved to some share place.
+# <Wayne Shih> 19-Mar-2021
+# If action is detail=False, then only perform has_permission() check
+# If action is detail=True, then perform both has_permission() and has_object_permission() checks
 class IsObjectOwner(BasePermission):
     message = 'You do not have permission to access this object.'
 
@@ -38,4 +38,8 @@ class IsObjectOwner(BasePermission):
         # then to check has_object_permission.
         # For the action with detail=False, it only need to check has_permission and
         # has_object_permission will not be called.
-        return request.user == obj.user
+        #
+        # <Wayne Shih> 19-Mar-2021
+        # Extend this check for notification to use.
+        return request.user == getattr(obj, 'user', None) or \
+               request.user == getattr(obj, 'recipient', None)

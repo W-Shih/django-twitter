@@ -20,6 +20,7 @@
 # 27-Feb-2021  Wayne Shih              Enhance api by decorator and get_serializer_class()
 # 12-Mar-2022  Wayne Shih              React to serializer changes
 # 12-Mar-2022  Wayne Shih              Trigger notification when create a comment
+# 19-Mar-2022  Wayne Shih              React to permissions.py refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -31,7 +32,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from comments.api.permissions import IsObjectOwner
 from comments.api.serializers import (
     CommentSerializer,
     CommentSerializerForCreate,
@@ -41,6 +41,7 @@ from comments.api.serializers import (
 from comments.models import Comment
 from inbox.services import NotificationService
 from utils.decorators import required_params
+from utils.permissions import IsObjectOwner
 
 
 class CommentFilter(django_filters.rest_framework.FilterSet):
@@ -144,7 +145,7 @@ class CommentViewSet(viewsets.GenericViewSet):
                 'errors': serializer.errors,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer.save()
+        comment = serializer.save()
         return Response(
             CommentSerializer(comment, context={'request': request}).data,
             status=status.HTTP_200_OK,
