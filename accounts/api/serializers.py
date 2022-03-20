@@ -24,6 +24,7 @@
 # 26-Feb-2022  Wayne Shih              Add UserSerializerForLike
 # 27-Feb-2022  Wayne Shih              Add DefaultAccountSerializer
 # 17-Mar-2022  Wayne Shih              Add UserSerializerForNotification
+# 20-Mar-2022  Wayne Shih              Create user's profile right after user has been created
 # $HISTORY$
 # =================================================================================================
 
@@ -130,4 +131,7 @@ class SignupSerializer(serializers.ModelSerializer):
             email=email,
             password=password,
         )
+        # <Wayne Shih> 19-Mar-2022
+        # Create user's profile right after user has been created
+        user.profile
         return user

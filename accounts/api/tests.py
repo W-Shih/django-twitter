@@ -9,14 +9,17 @@
 # 12-Aug-2021  Wayne Shih              Initial create
 # 07-Sep-2021  Wayne Shih              React to refactoring TestCase
 # 10-Oct-2021  Wayne Shih              React to pylint checks
-# 27-Feb-2022  Wayne Shih              Add test for DRF API list page and tests for login
+# 27-Feb-2022  Wayne Shih              Add a test for DRF API list page and tests for login
+# 20-Mar-2022  Wayne Shih              Add a test for UserProfile
 # $HISTORY$
 # =================================================================================================
 
 
+from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from accounts.models import UserProfile
 from testing.testcases import TestCase
 
 
@@ -176,7 +179,6 @@ class AccountApiTests(TestCase):
             'email': 'not a correct email',
             'password': 'any_password'
         })
-        # print(response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
@@ -188,7 +190,6 @@ class AccountApiTests(TestCase):
             'email': 'someone@fb.com',
             'password': '123',
         })
-        # print(response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
@@ -203,7 +204,6 @@ class AccountApiTests(TestCase):
             'email': 'someone@google.com',
             'password': 'any_password',
         })
-        # print(response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
@@ -218,7 +218,6 @@ class AccountApiTests(TestCase):
             'email': 'someone@google.com',
             'password': 'any_password',
         })
-        # print(response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
@@ -233,7 +232,6 @@ class AccountApiTests(TestCase):
             'email': self.user.email,
             'password': 'any_password',
         })
-        # print(response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
@@ -244,11 +242,12 @@ class AccountApiTests(TestCase):
 
         # Test signup successfully  <Wayne Shih> 12-Aug-2021
         response = self.client.post(SIGNUP_URL, data)
-        # print(response.data)
+        user = User.objects.filter(username=response.data['user']['username']).first()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['success'], True)
         self.assertEqual(response.data['user']['username'], 'someone')
         self.assertEqual(response.data['user']['email'], 'someone@fb.com')
+        self.assertEqual(UserProfile.objects.filter(user_id=user.id).exists(), True)
 
         # Check now is at login state  <Wayne Shih> 12-Aug-2021
         response = self.client.get(LOGIN_STATUS_URL)
