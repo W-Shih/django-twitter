@@ -9,6 +9,7 @@
 # 05-Nov-2021  Wayne Shih              Initial create
 # 27-Nov-2021  Wayne Shih              React to  Comment ordering update
 # 24-Feb-2022  Wayne Shih              Add tests for likes model
+# 20-Mar-2022  Wayne Shih              Change class name to CommentTests
 # $HISTORY$
 # =================================================================================================
 
@@ -19,7 +20,7 @@ from comments.models import Comment
 from testing.testcases import TestCase
 
 
-class CommentTest(TestCase):
+class CommentTests(TestCase):
 
     def setUp(self):
         self.lbj23 = self.create_user(username='cavs_lbj23')
@@ -33,10 +34,10 @@ class CommentTest(TestCase):
 
     def test_comment_model_attributes(self):
         self.assertEqual(hasattr(Comment, 'id'), True)
-        self.assertEqual(hasattr(Comment, 'user'), True)
         self.assertEqual(hasattr(Comment, 'user_id'), True)
-        self.assertEqual(hasattr(Comment, 'tweet'), True)
+        self.assertEqual(hasattr(Comment, 'user'), True)
         self.assertEqual(hasattr(Comment, 'tweet_id'), True)
+        self.assertEqual(hasattr(Comment, 'tweet'), True)
         self.assertEqual(hasattr(Comment, 'content'), True)
         self.assertEqual(hasattr(Comment, 'created_at'), True)
         self.assertEqual(hasattr(Comment, 'updated_at'), True)
