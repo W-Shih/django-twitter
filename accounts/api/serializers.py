@@ -25,6 +25,7 @@
 # 27-Feb-2022  Wayne Shih              Add DefaultAccountSerializer
 # 17-Mar-2022  Wayne Shih              Add UserSerializerForNotification
 # 20-Mar-2022  Wayne Shih              Create user's profile right after user has been created
+# 23-Mar-2022  Wayne Shih              Update user-related serializer
 # $HISTORY$
 # =================================================================================================
 
@@ -42,29 +43,37 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'email')
 
 
-class BaseUserSerializerForDisplay(serializers.ModelSerializer):
+class UserSerializerWithProfile(serializers.ModelSerializer):
+    nickname = serializers.CharField(source='profile.nickname')
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username')
+        fields = ('id', 'username', 'nickname', 'avatar_url')
+
+    def get_avatar_url(self, obj):
+        if obj.profile.avatar:
+            return obj.profile.avatar.url
+        return None
 
 
-class UserSerializerForTweet(BaseUserSerializerForDisplay):
+class UserSerializerForTweet(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForFriendship(BaseUserSerializerForDisplay):
+class UserSerializerForFriendship(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForComment(BaseUserSerializerForDisplay):
+class UserSerializerForComment(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForLike(BaseUserSerializerForDisplay):
+class UserSerializerForLike(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForNotification(BaseUserSerializerForDisplay):
+class UserSerializerForNotification(UserSerializerWithProfile):
     pass
 
 

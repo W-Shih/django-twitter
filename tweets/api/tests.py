@@ -14,6 +14,7 @@
 # 27-Nov-2021  Wayne Shih              React to decorator enhancement
 # 23-Feb-2022  Wayne Shih              Add a test for tweet list api
 # 12-Mar-2022  Wayne Shih              React to serializer changes
+# 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # $HISTORY$
 # =================================================================================================
 
@@ -129,6 +130,8 @@ class TweetApiTests(TestCase):
         self.assertEqual(response.data['user'], {
             'id': self.user1.id,
             'username': self.user1.username,
+            'nickname': self.user1.profile.nickname,
+            'avatar_url': self.get_avator_url(self.user1),
         })
         self.assertEqual(
             set(response.data.keys()),
@@ -161,7 +164,10 @@ class TweetApiTests(TestCase):
                 'likes',
             }
         )
-        self.assertEqual(response.json().get('user').keys(), {'id', 'username'})
+        self.assertEqual(
+            response.json().get('user').keys(),
+            {'id', 'username', 'nickname', 'avatar_url'}
+        )
         self.assertEqual(isinstance(response.json().get('comments'), list), True)
         self.assertEqual(len(response.data['comments']), 0)
 
