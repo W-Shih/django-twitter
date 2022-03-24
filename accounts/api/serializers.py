@@ -25,12 +25,15 @@
 # 27-Feb-2022  Wayne Shih              Add DefaultAccountSerializer
 # 17-Mar-2022  Wayne Shih              Add UserSerializerForNotification
 # 20-Mar-2022  Wayne Shih              Create user's profile right after user has been created
+# 23-Mar-2022  Wayne Shih              Update user-related serializer and add UserProfileSerializerForUpdate
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
 from rest_framework import exceptions, serializers
+
+from accounts.models import UserProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -39,32 +42,40 @@ class UserSerializer(serializers.ModelSerializer):
     # - https://www.django-rest-framework.org/tutorial/1-serialization/#using-modelserializers
     class Meta:
         model = User
-        fields = ('username', 'email')
-
-
-class BaseUserSerializerForDisplay(serializers.ModelSerializer):
-    class Meta:
-        model = User
         fields = ('id', 'username')
 
 
-class UserSerializerForTweet(BaseUserSerializerForDisplay):
+class UserSerializerWithProfile(serializers.ModelSerializer):
+    nickname = serializers.CharField(source='profile.nickname')
+    avatar_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'nickname', 'avatar_url')
+
+    def get_avatar_url(self, obj):
+        if obj.profile.avatar:
+            return obj.profile.avatar.url
+        return None
+
+
+class UserSerializerForTweet(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForFriendship(BaseUserSerializerForDisplay):
+class UserSerializerForFriendship(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForComment(BaseUserSerializerForDisplay):
+class UserSerializerForComment(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForLike(BaseUserSerializerForDisplay):
+class UserSerializerForLike(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForNotification(BaseUserSerializerForDisplay):
+class UserSerializerForNotification(UserSerializerWithProfile):
     pass
 
 
@@ -135,3 +146,9 @@ class SignupSerializer(serializers.ModelSerializer):
         # Create user's profile right after user has been created
         user.profile
         return user
+
+
+class UserProfileSerializerForUpdate(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ('nickname', 'avatar')

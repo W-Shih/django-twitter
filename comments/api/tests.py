@@ -14,6 +14,7 @@
 # 23-Feb-2022  Wayne Shih              React to enhancement by django-filters: filterset_class
 # 27-Feb-2022  Wayne Shih              React to enhancement by decorator and add tests for update
 # 12-Mar-2022  Wayne Shih              React to serializer changes and add tests for comments_count
+# 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # $HISTORY$
 # =================================================================================================
 
@@ -100,6 +101,8 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['user'], {
             'id': self.kd35.id,
             'username': self.kd35.username,
+            'nickname': self.kd35.profile.nickname,
+            'avatar_url': self.get_avator_url(self.kd35),
         })
         self.assertEqual(response.data['tweet_id'], self.tweet.id)
         self.assertEqual(response.data['content'], 'Good 4 u, my bro!')
@@ -200,6 +203,8 @@ class CommentApiTests(TestCase):
         self.assertEqual(response.data['user'], {
             'id': self.lbj23.id,
             'username': self.lbj23.username,
+            'nickname': self.lbj23.profile.nickname,
+            'avatar_url': self.get_avator_url(self.lbj23),
         })
         self.assertEqual(response.data['content'], new_comment)
         self.assertEqual(comment.created_at, old_created_at)

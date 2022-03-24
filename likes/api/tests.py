@@ -9,6 +9,7 @@
 # 26-Feb-2022  Wayne Shih              Initial create
 # 05-Mar-2022  Wayne Shih              Add tests for like cancel and list APIs
 # 12-Mar-2022  Wayne Shih              Add tests for likes in tweets and comments
+# 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # $HISTORY$
 # =================================================================================================
 
@@ -132,6 +133,8 @@ class LikeApiTests(TestCase):
         self.assertEqual(response.data['user'], {
             'id': self.lbj23.id,
             'username': self.lbj23.username,
+            'nickname': self.lbj23.profile.nickname,
+            'avatar_url': self.get_avator_url(self.lbj23),
         })
         self.assertEqual(likes_count, 1)
 

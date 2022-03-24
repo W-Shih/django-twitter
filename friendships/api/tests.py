@@ -11,6 +11,7 @@
 # 04-Nov-2021  Wayne Shih              React to adding anonymous_client to base class
 # 06-Nov-2021  Wayne Shih              Modify some assertEqual to check set instead of list
 # 13-Nov-2021  Wayne Shih              Update non_existing_user_id larger to Fix test fail
+# 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # $HISTORY$
 # =================================================================================================
 
@@ -68,7 +69,10 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(isinstance(followers, list), True)
         self.assertEqual(len(followers), 2)
         self.assertEqual(set(followers[0].keys()), {'from_user', 'created_at'})
-        self.assertEqual(set(followers[0].get('from_user')), {'id', 'username'})
+        self.assertEqual(
+            set(followers[0].get('from_user')),
+            {'id', 'username', 'nickname', 'avatar_url'}
+        )
         # <Wayne Shih> 06-Sep-2021
         # test order by '-created_at'
         for i in range(len(followers) - 1):
@@ -98,7 +102,10 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(isinstance(followings, list), True)
         self.assertEqual(len(followings), 3)
         self.assertEqual(set(followings[0].keys()), {'user', 'created_at'})
-        self.assertEqual(set(followings[0].get('user')), {'id', 'username'})
+        self.assertEqual(
+            set(followings[0].get('user')),
+            {'id', 'username', 'nickname', 'avatar_url'}
+        )
         # <Wayne Shih> 06-Sep-2021
         # test order by '-created_at'
         for i in range(len(followings) - 1):

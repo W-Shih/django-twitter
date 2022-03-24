@@ -19,6 +19,7 @@
 # 25-Nov-2021  Wayne Shih              Add django_filters
 # 24-Feb-2022  Wayne Shih              Add likes
 # 12-Mar-2022  Wayne Shih              Add notifications and inbox
+# 23-Mar-2022  Wayne Shih              Add MEDIA_ROOT, DEFAULT_FILE_STORAGE, AWS-related variables
 # $HISTORY$
 # =================================================================================================
 
@@ -33,6 +34,9 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+
+import os
+import sys
 
 from pathlib import Path
 
@@ -173,8 +177,32 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
-
 STATIC_URL = '/static/'
+
+# <Wayne Shih> 20-Mar-2022
+# https://docs.djangoproject.com/en/3.1/ref/settings/#media-root
+MEDIA_ROOT = './media/'
+
+# <Wayne Shih> 20-Mar-2022
+# Amazon S3 with django-storages
+# https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
+# https://docs.djangoproject.com/en/3.1/ref/settings/#default-file-storage
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+TESTING = ((' '.join(sys.argv)).find('manage.py test') != -1)
+if TESTING:
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+AWS_STORAGE_BUCKET_NAME = 'django.twitter'
+AWS_S3_REGION_NAME = 'us-west-1'
+
+# <Wayne Shih> 20-Mar-2022
+# AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY are confidential.
+# Do NOT add these information in settings.py
+# Please set them in local_settings.py
+#
+# The other option is to set them as environment variables instead.
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
 try:
     from .local_settings import *

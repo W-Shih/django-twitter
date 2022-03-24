@@ -10,12 +10,14 @@
 # 07-Sep-2021  Wayne Shih              React to refactoring TestCase
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2022  Wayne Shih              Add a test for DRF API list page and tests for login
-# 20-Mar-2022  Wayne Shih              Add a test for UserProfile
+# 20-Mar-2022  Wayne Shih              Add a test for UserProfile model
+# 23-Mar-2022  Wayne Shih              Add tests for UserProfile & User APIs, react to serializer change
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -23,11 +25,15 @@ from accounts.models import UserProfile
 from testing.testcases import TestCase
 
 
-DRF_API_LIST_URL = '/api/accounts/'
+ACCOUNTS_BASE_URL = '/api/accounts/'
 LOGIN_URL = '/api/accounts/login/'
 LOGOUT_URL = '/api/accounts/logout/'
 SIGNUP_URL = '/api/accounts/signup/'
 LOGIN_STATUS_URL = '/api/accounts/login_status/'
+USER_PROFILES_BASE_URL = '/api/profiles/'
+USER_PROFILES_DETAIL_URL = '/api/profiles/{}/'
+USER_BASE_URL = '/api/users/'
+USER_DETAIL_URL = '/api/users/{}/'
 
 
 # <Wayne Shih> 12-Aug-2021
@@ -57,7 +63,7 @@ class AccountApiTests(TestCase):
         )
 
     def test_drf_api_list_page(self):
-        response = self.anonymous_client.get(DRF_API_LIST_URL)
+        response = self.anonymous_client.get(ACCOUNTS_BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # <Wayne Shih> 12-Aug-2021
@@ -131,7 +137,7 @@ class AccountApiTests(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotEqual(response.data['user'], None)
-        self.assertEqual(response.data['user']['email'], 'fake_user@twitter.com')
+        self.assertEqual(response.data['user']['id'], self.user.id)
 
         # Check now is at login state  <Wayne Shih> 12-Aug-2021
         response = self.client.get(LOGIN_STATUS_URL)
@@ -245,11 +251,240 @@ class AccountApiTests(TestCase):
         user = User.objects.filter(username=response.data['user']['username']).first()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['success'], True)
-        self.assertEqual(response.data['user']['username'], 'someone')
-        self.assertEqual(response.data['user']['email'], 'someone@fb.com')
+        self.assertEqual(response.data['user']['username'], user.username)
+        self.assertEqual(response.data['user']['id'], user.id)
         self.assertEqual(UserProfile.objects.filter(user_id=user.id).exists(), True)
 
         # Check now is at login state  <Wayne Shih> 12-Aug-2021
         response = self.client.get(LOGIN_STATUS_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['has_logged_in'], True)
+
+
+class UserApiTests(TestCase):
+
+    def setUp(self):
+        self.mj23, self.mj23_client = self.create_user_and_auth_client(username='mj23')
+        self.mj23.is_superuser = True
+        self.lbj23, self.lbj23_client = self.create_user_and_auth_client(username='lbj23')
+        self.lbj23.is_staff = True
+        self.kd35, self.kd35_client = self.create_user_and_auth_client(username='kd35')
+        self.kd35_client.put(USER_PROFILES_DETAIL_URL.format(self.kd35.profile.id), {
+            'nickname': 'kd35',
+            'avatar': SimpleUploadedFile(
+                name='cupcake-photo.jpg',
+                content=str.encode('cupcake image'),
+                content_type='image/jpeg',
+            ),
+        })
+
+    def test_list_api(self):
+        # Non-login user  <Wayne Shih> 23-Mar-2022
+        response = self.anonymous_client.get(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'Authentication credentials were not provided.'
+        )
+
+        # Regular login user  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.get(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+
+        # Staff user  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.get(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+
+        # Super user can't create user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.post(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Super user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.get(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 3)
+
+    def test_retrieve_api(self):
+        url = USER_DETAIL_URL.format(self.lbj23.id)
+
+        # Super user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(set(response.json().keys()), {'id', 'username', 'nickname', 'avatar_url'})
+        self.assertEqual(response.data['id'], self.lbj23.id)
+        self.assertEqual(response.data['username'], self.lbj23.username)
+
+        # Super user can't modify user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.put(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.mj23_client.patch(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Staff user  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.get(url)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Regular login user  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.get(url)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Non-login user  <Wayne Shih> 23-Mar-2022
+        response = self.anonymous_client.get(url)
+        self.assertEqual(
+            response.data['detail'],
+            'Authentication credentials were not provided.'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_api(self):
+        url = USER_DETAIL_URL.format(self.lbj23.id)
+
+        # Non-login user  <Wayne Shih> 23-Mar-2022
+        response = self.anonymous_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'Authentication credentials were not provided.'
+        )
+
+        # Regular login user  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.delete(url)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Staff user  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+
+        # Super user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(User.objects.count(), 2)
+
+
+class UserProfileApiTests(TestCase):
+
+    def setUp(self):
+        self.lbj23, self.lbj23_client = self.create_user_and_auth_client(username='lbj23')
+        self.lbj23_profile = self.lbj23.profile
+        self.lbj23.profile.nickname = 'old nickname'
+        self.lbj23.profile.save()
+        self.kd35, self.kd35_client = self.create_user_and_auth_client(username='kd35')
+
+    def test_drf_api_list_page(self):
+        response = self.anonymous_client.get(USER_PROFILES_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_api(self):
+        url = USER_PROFILES_DETAIL_URL.format(self.lbj23.profile.id)
+
+        # Non-login users  <Wayne Shih> 23-Mar-2022
+        response = self.anonymous_client.patch(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.anonymous_client.put(url, {'nickname': 'new nickname'})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'Authentication credentials were not provided.'
+        )
+
+        # kd35 is not the profile owner  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.get(url, {'nickname': 'new nickname'})
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.kd35_client.put(url, {'nickname': 'new nickname'})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to access this object.'
+        )
+
+        # Missing param  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.put(url, {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors'],
+            'Request is missing param(s): nickname/avatar. '
+            'At least one missing param is required to provide.'
+        )
+
+        # lbj23 update an invalid nickname  <Wayne Shih> 23-Mar-2022
+        invalid_nickname = '1' * 200
+        response = self.lbj23_client.put(url, {'nickname': invalid_nickname})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors']['nickname'][0],
+            'Ensure this field has no more than 100 characters.'
+        )
+
+        # lbj23 update an invalid avatar  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.put(url, {'avatar': 'invalid avatar'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors']['avatar'][0],
+            'The submitted data was not a file. Check the encoding type on the form.'
+        )
+
+        # lbj23 update his nickname  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.put(url, {'nickname': 'new nickname'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['nickname'], 'new nickname')
+        self.assertEqual(response.data['avatar'], self.lbj23.profile.avatar)
+
+        # lbj23 update his avatar  <Wayne Shih> 23-Mar-2022
+        self.lbj23.profile.refresh_from_db()
+        response = self.lbj23_client.put(url, {
+            'avatar': SimpleUploadedFile(
+                name='lbj-avatar.jpg',
+                content=str.encode('a fake image'),
+                content_type='image/jpeg',
+            ),
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['nickname'], self.lbj23.profile.nickname)
+        self.assertEqual('lbj-avatar' in response.data['avatar'], True)
+
+        # lbj23 update his nickname & avatar  <Wayne Shih> 23-Mar-2022
+        self.lbj23.profile.refresh_from_db()
+        response = self.lbj23_client.put(url, {
+            'nickname': 'king lbj',
+            'avatar': SimpleUploadedFile(
+                name='king-lbj-photo.jpg',
+                content=str.encode('GOAT image'),
+                content_type='image/jpeg',
+            ),
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['nickname'], 'king lbj')
+        self.assertEqual('king-lbj-photo' in response.data['avatar'], True)

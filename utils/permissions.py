@@ -13,6 +13,7 @@
 #    Date      Name                    Description of Change
 # 13-Nov-2021  Wayne Shih              Initial create
 # 19-Mar-2022  Wayne Shih              Move this file to utils, extend has_object_permission, modify some comments
+# 23-Mar-2022  Wayne Shih              Add IsSuperuser
 # $HISTORY$
 # =================================================================================================
 
@@ -41,5 +42,12 @@ class IsObjectOwner(BasePermission):
         #
         # <Wayne Shih> 19-Mar-2021
         # Extend this check for notification to use.
-        return request.user == getattr(obj, 'user', None) or \
-               request.user == getattr(obj, 'recipient', None)
+        return (
+            request.user == getattr(obj, 'user', None) or
+            request.user == getattr(obj, 'recipient', None)
+        )
+
+
+class IsSuperuser(BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_superuser)

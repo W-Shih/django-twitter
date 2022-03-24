@@ -10,7 +10,8 @@
 #
 # =================================================================================================
 #    Date      Name                    Description of Change
-# 19-Mar-2021  Wayne Shih              Initial create
+# 19-Mar-2022  Wayne Shih              Initial create
+# 23-Mar-2022  Wayne Shih              Update UserProfile's __str__
 # $HISTORY$
 # =================================================================================================
 
@@ -29,9 +30,10 @@ class UserProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        message = 'Profile {user}-{user_id} with nickname-{nickname} and avatar-{avatar}' \
-                  'was created at {created_at} and updated at {updated_at}.'
+        message = 'Profile-[{id}]: {user}-[{user_id}] with nickname-[{nickname}] and ' \
+                  'avatar-[{avatar}] was created at {created_at} and updated at {updated_at}.'
         return message.format(
+            id=self.id,
             user=self.user,
             user_id=self.user_id,
             nickname=self.nickname,

@@ -6,7 +6,8 @@
 #
 # =================================================================================================
 #    Date      Name                    Description of Change
-# 19-Mar-2021  Wayne Shih              Initial create
+# 19-Mar-2022  Wayne Shih              Initial create
+# 23-Mar-2022  Wayne Shih              React to UserProfile's updates
 # $HISTORY$
 # =================================================================================================
 
@@ -48,9 +49,10 @@ class UserProfileTests(TestCase):
             str(lbj23_profile.user_id) in str(lbj23_profile),
             True
         )
-        message = 'Profile {user}-{user_id} with nickname-{nickname} and avatar-{avatar}' \
-                  'was created at {created_at} and updated at {updated_at}.'
+        message = 'Profile-[{id}]: {user}-[{user_id}] with nickname-[{nickname}] and ' \
+                  'avatar-[{avatar}] was created at {created_at} and updated at {updated_at}.'
         self.assertEqual(message.format(
+            id=lbj23_profile.id,
             user=lbj23_profile.user,
             user_id=lbj23_profile.user_id,
             nickname=lbj23_profile.nickname,

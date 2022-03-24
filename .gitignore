@@ -9,20 +9,26 @@
 # 02-Aug-2021  Wayne Shih              Initial create from GitHub
 # 03-Aug-2021  Wayne Shih              Ignore vagrant-related files and PyCharm-related config
 # 07-Aug-2021  Wayne Shih              Ignore PyCharm-related config
+# 23-Mar-2022  Wayne Shih              Ignore vscode-related config and user-uploaded files
 # $HISTORY$
 # =================================================================================================
 
 
-# <Wayne Shih> 03-Aug-2021 
+# <Wayne Shih> 03-Aug-2021
 # vagrant-related files
 *.box
 .vagrant
 Vagrantfile
 
-# <Wayne Shih> 03-Aug-2021 
-# PyCharm-related config
+# <Wayne Shih> 22-Mar-2022
+# PyCharm and vscode related config
 .pycharm_helpers/
 .idea
+.vscode/
+
+# <Wayne Shih> 22-Mar-2022
+# The directory that will hold user-uploaded files
+media/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

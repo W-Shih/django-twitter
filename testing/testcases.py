@@ -15,6 +15,7 @@
 # 24-Feb-2022  Wayne Shih              Add create_like
 # 26-Feb-2022  Wayne Shih              Add create_user_and_auth_client
 # 12-Mar-2022  Wayne Shih              Add create_newsfeed
+# 23-Mar-2022  Wayne Shih              Add get_avator_url
 # $HISTORY$
 # =================================================================================================
 
@@ -81,3 +82,6 @@ class TestCase(DjangoTestCase):
 
     def create_newsfeed(self, user, tweet):
         return NewsFeed.objects.create(user=user, tweet=tweet)
+
+    def get_avator_url(self, user):
+        return user.profile.avatar.url if user.profile.avatar else None
