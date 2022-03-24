@@ -11,7 +11,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2022  Wayne Shih              Add a test for DRF API list page and tests for login
 # 20-Mar-2022  Wayne Shih              Add a test for UserProfile model
-# 23-Mar-2022  Wayne Shih              Add tests for UserProfile API, react to serializer change
+# 23-Mar-2022  Wayne Shih              Add tests for UserProfile & User APIs, react to serializer change
 # $HISTORY$
 # =================================================================================================
 
@@ -32,6 +32,8 @@ SIGNUP_URL = '/api/accounts/signup/'
 LOGIN_STATUS_URL = '/api/accounts/login_status/'
 USER_PROFILES_BASE_URL = '/api/profiles/'
 USER_PROFILES_DETAIL_URL = '/api/profiles/{}/'
+USER_BASE_URL = '/api/users/'
+USER_DETAIL_URL = '/api/users/{}/'
 
 
 # <Wayne Shih> 12-Aug-2021
@@ -257,6 +259,131 @@ class AccountApiTests(TestCase):
         response = self.client.get(LOGIN_STATUS_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['has_logged_in'], True)
+
+
+class UserApiTests(TestCase):
+
+    def setUp(self):
+        self.mj23, self.mj23_client = self.create_user_and_auth_client(username='mj23')
+        self.mj23.is_superuser = True
+        self.lbj23, self.lbj23_client = self.create_user_and_auth_client(username='lbj23')
+        self.lbj23.is_staff = True
+        self.kd35, self.kd35_client = self.create_user_and_auth_client(username='kd35')
+        self.kd35_client.put(USER_PROFILES_DETAIL_URL.format(self.kd35.profile.id), {
+            'nickname': 'kd35',
+            'avatar': SimpleUploadedFile(
+                name='cupcake-photo.jpg',
+                content=str.encode('cupcake image'),
+                content_type='image/jpeg',
+            ),
+        })
+
+    def test_list_api(self):
+        # Non-login user  <Wayne Shih> 23-Mar-2022
+        response = self.anonymous_client.get(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'Authentication credentials were not provided.'
+        )
+
+        # Regular login user  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.get(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+
+        # Staff user  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.get(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+
+        # Super user can't create user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.post(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Super user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.get(USER_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 3)
+
+    def test_retrieve_api(self):
+        url = USER_DETAIL_URL.format(self.lbj23.id)
+
+        # Super user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(set(response.json().keys()), {'id', 'username', 'nickname', 'avatar_url'})
+        self.assertEqual(response.data['id'], self.lbj23.id)
+        self.assertEqual(response.data['username'], self.lbj23.username)
+
+        # Super user can't modify user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.put(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.mj23_client.patch(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Staff user  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.get(url)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Regular login user  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.get(url)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Non-login user  <Wayne Shih> 23-Mar-2022
+        response = self.anonymous_client.get(url)
+        self.assertEqual(
+            response.data['detail'],
+            'Authentication credentials were not provided.'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_api(self):
+        url = USER_DETAIL_URL.format(self.lbj23.id)
+
+        # Non-login user  <Wayne Shih> 23-Mar-2022
+        response = self.anonymous_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'Authentication credentials were not provided.'
+        )
+
+        # Regular login user  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.delete(url)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Staff user  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to perform this action.'
+        )
+
+        # Super user  <Wayne Shih> 23-Mar-2022
+        response = self.mj23_client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(User.objects.count(), 2)
 
 
 class UserProfileApiTests(TestCase):

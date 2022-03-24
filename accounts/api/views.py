@@ -15,7 +15,7 @@
 # 21-Aug-2021  Wayne Shih              Add ip information in login_status for django-debug-toolbar
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2021  Wayne Shih              Enhance account api by decorator and GenericViewSet
-# 23-Mar-2022  Wayne Shih              Add UserProfileViewSet
+# 23-Mar-2022  Wayne Shih              Add UserProfileViewSet, update UserViewSet only for superuser
 # $HISTORY$
 # =================================================================================================
 
@@ -37,22 +37,26 @@ from accounts.api.serializers import (
     SignupSerializer,
     UserProfileSerializerForUpdate,
     UserSerializer,
+    UserSerializerWithProfile,
 )
 from accounts.models import UserProfile
 from utils.decorators import required_params
-from utils.permissions import IsObjectOwner
+from utils.permissions import IsObjectOwner, IsSuperuser
 
 
 class UserViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows users to be viewed or edited.
+    API endpoint that allows users to be viewed or deleted by superuser.
     """
     queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer  # the class to render the data to json
+    serializer_class = UserSerializerWithProfile
     # <Wayne Shih> 21-Aug-2021
     # Set permission_classes
     # - https://www.django-rest-framework.org/api-guide/permissions/#api-reference
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = (IsSuperuser,)
+    # <Wayne Shih> 23-Mar-2022
+    # - https://docs.djangoproject.com/en/4.0/ref/class-based-views/base/#django.views.generic.base.View.http_method_names
+    http_method_names = ['get', 'delete', 'head', 'options']
 
 
 # <Wayne Shih> 06-Aug-2021
