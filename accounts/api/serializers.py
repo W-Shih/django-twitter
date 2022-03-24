@@ -42,7 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
     # - https://www.django-rest-framework.org/tutorial/1-serialization/#using-modelserializers
     class Meta:
         model = User
-        fields = ('username', 'email')
+        fields = ('id', 'username')
 
 
 class UserSerializerWithProfile(serializers.ModelSerializer):

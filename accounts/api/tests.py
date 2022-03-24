@@ -11,7 +11,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2022  Wayne Shih              Add a test for DRF API list page and tests for login
 # 20-Mar-2022  Wayne Shih              Add a test for UserProfile model
-# 23-Mar-2022  Wayne Shih              Add tests for UserProfile API
+# 23-Mar-2022  Wayne Shih              Add tests for UserProfile API, react to serializer change
 # $HISTORY$
 # =================================================================================================
 
@@ -25,7 +25,7 @@ from accounts.models import UserProfile
 from testing.testcases import TestCase
 
 
-DRF_API_LIST_URL = '/api/accounts/'
+ACCOUNTS_BASE_URL = '/api/accounts/'
 LOGIN_URL = '/api/accounts/login/'
 LOGOUT_URL = '/api/accounts/logout/'
 SIGNUP_URL = '/api/accounts/signup/'
@@ -61,7 +61,7 @@ class AccountApiTests(TestCase):
         )
 
     def test_drf_api_list_page(self):
-        response = self.anonymous_client.get(DRF_API_LIST_URL)
+        response = self.anonymous_client.get(ACCOUNTS_BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # <Wayne Shih> 12-Aug-2021
@@ -135,7 +135,7 @@ class AccountApiTests(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotEqual(response.data['user'], None)
-        self.assertEqual(response.data['user']['email'], 'fake_user@twitter.com')
+        self.assertEqual(response.data['user']['id'], self.user.id)
 
         # Check now is at login state  <Wayne Shih> 12-Aug-2021
         response = self.client.get(LOGIN_STATUS_URL)
@@ -249,8 +249,8 @@ class AccountApiTests(TestCase):
         user = User.objects.filter(username=response.data['user']['username']).first()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['success'], True)
-        self.assertEqual(response.data['user']['username'], 'someone')
-        self.assertEqual(response.data['user']['email'], 'someone@fb.com')
+        self.assertEqual(response.data['user']['username'], user.username)
+        self.assertEqual(response.data['user']['id'], user.id)
         self.assertEqual(UserProfile.objects.filter(user_id=user.id).exists(), True)
 
         # Check now is at login state  <Wayne Shih> 12-Aug-2021
