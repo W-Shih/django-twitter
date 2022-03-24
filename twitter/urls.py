@@ -17,6 +17,7 @@
 # 06-Nov-2021  Wayne Shih              Register router CommentViewSet
 # 26-Feb-2022  Wayne Shih              Register router LikeViewSet
 # 17-Mar-2022  Wayne Shih              Register router NotificationViewSet
+# 23-Mar-2022  Wayne Shih              Register router UserProfileViewSet
 # $HISTORY$
 # =================================================================================================
 
@@ -42,7 +43,7 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
 
-from accounts.api.views import AccountViewSet, UserViewSet
+from accounts.api.views import AccountViewSet, UserViewSet, UserProfileViewSet
 from comments.api.views import CommentViewSet
 from friendships.api.views import FriendshipViewSet
 from inbox.api.views import NotificationViewSet
@@ -62,6 +63,7 @@ router.register(r'api/newsfeeds', NewsFeedViewSet, basename='newsfeeds')
 router.register(r'api/comments', CommentViewSet, basename='comments')
 router.register(r'api/likes', LikeViewSet, basename='likes')
 router.register(r'api/notifications', NotificationViewSet, basename='notifications')
+router.register(r'api/profiles', UserProfileViewSet, basename='profiles')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

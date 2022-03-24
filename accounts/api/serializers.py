@@ -25,13 +25,15 @@
 # 27-Feb-2022  Wayne Shih              Add DefaultAccountSerializer
 # 17-Mar-2022  Wayne Shih              Add UserSerializerForNotification
 # 20-Mar-2022  Wayne Shih              Create user's profile right after user has been created
-# 23-Mar-2022  Wayne Shih              Update user-related serializer
+# 23-Mar-2022  Wayne Shih              Update user-related serializer and add UserProfileSerializerForUpdate
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
 from rest_framework import exceptions, serializers
+
+from accounts.models import UserProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -144,3 +146,9 @@ class SignupSerializer(serializers.ModelSerializer):
         # Create user's profile right after user has been created
         user.profile
         return user
+
+
+class UserProfileSerializerForUpdate(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ('nickname', 'avatar')

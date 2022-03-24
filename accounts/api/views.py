@@ -15,6 +15,7 @@
 # 21-Aug-2021  Wayne Shih              Add ip information in login_status for django-debug-toolbar
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2021  Wayne Shih              Enhance account api by decorator and GenericViewSet
+# 23-Mar-2022  Wayne Shih              Add UserProfileViewSet
 # $HISTORY$
 # =================================================================================================
 
@@ -26,17 +27,20 @@ from django.contrib.auth import (
 )
 from django.contrib.auth.models import User
 from rest_framework import viewsets, status
-from rest_framework import permissions
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from accounts.api.serializers import (
     DefaultAccountSerializer,
     LoginSerializer,
     SignupSerializer,
+    UserProfileSerializerForUpdate,
     UserSerializer,
 )
+from accounts.models import UserProfile
 from utils.decorators import required_params
+from utils.permissions import IsObjectOwner
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -237,3 +241,43 @@ class AccountViewSet(viewsets.GenericViewSet):
             'user': UserSerializer(user).data
         }, status=status.HTTP_201_CREATED)
 
+
+class UserProfileViewSet(viewsets.GenericViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializerForUpdate
+
+    def get_permissions(self):
+        if self.action == 'update':
+            return [IsAuthenticated(), IsObjectOwner()]
+        return [AllowAny()]
+
+    def list(self, request):
+        return Response({
+            'message': {
+                'Update profile': {
+                    'method': 'PUT',
+                    'url': '/api/profiles/{profile_id_pk}/',
+                },
+            }
+        }, status=status.HTTP_200_OK)
+
+    # <Wayne Shih> 22-Mar-2022
+    # URL:
+    # - PUT /api/profiles/{pk}/
+    # Typically use PUT to perform partial update.
+    @required_params(method='PUT', params=['nickname', 'avatar'], is_required_all=False)
+    def update(self, request, *args, **kwargs):
+        profile = self.get_object()
+        serializer = self.get_serializer(instance=profile, data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'message': 'Please check input.',
+                'errors': serializer.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        profile = serializer.save()
+        return Response(
+            UserProfileSerializerForUpdate(profile).data,
+            status=status.HTTP_200_OK,
+        )

@@ -10,12 +10,14 @@
 # 07-Sep-2021  Wayne Shih              React to refactoring TestCase
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2022  Wayne Shih              Add a test for DRF API list page and tests for login
-# 20-Mar-2022  Wayne Shih              Add a test for UserProfile
+# 20-Mar-2022  Wayne Shih              Add a test for UserProfile model
+# 23-Mar-2022  Wayne Shih              Add tests for UserProfile API
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -28,6 +30,8 @@ LOGIN_URL = '/api/accounts/login/'
 LOGOUT_URL = '/api/accounts/logout/'
 SIGNUP_URL = '/api/accounts/signup/'
 LOGIN_STATUS_URL = '/api/accounts/login_status/'
+USER_PROFILES_BASE_URL = '/api/profiles/'
+USER_PROFILES_DETAIL_URL = '/api/profiles/{}/'
 
 
 # <Wayne Shih> 12-Aug-2021
@@ -253,3 +257,107 @@ class AccountApiTests(TestCase):
         response = self.client.get(LOGIN_STATUS_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['has_logged_in'], True)
+
+
+class UserProfileApiTests(TestCase):
+
+    def setUp(self):
+        self.lbj23, self.lbj23_client = self.create_user_and_auth_client(username='lbj23')
+        self.lbj23_profile = self.lbj23.profile
+        self.lbj23.profile.nickname = 'old nickname'
+        self.lbj23.profile.save()
+        self.kd35, self.kd35_client = self.create_user_and_auth_client(username='kd35')
+
+    def test_drf_api_list_page(self):
+        response = self.anonymous_client.get(USER_PROFILES_BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_api(self):
+        url = USER_PROFILES_DETAIL_URL.format(self.lbj23.profile.id)
+
+        # Non-login users  <Wayne Shih> 23-Mar-2022
+        response = self.anonymous_client.patch(url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.anonymous_client.put(url, {'nickname': 'new nickname'})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'Authentication credentials were not provided.'
+        )
+
+        # kd35 is not the profile owner  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.get(url, {'nickname': 'new nickname'})
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        response = self.kd35_client.put(url, {'nickname': 'new nickname'})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to access this object.'
+        )
+
+        # Missing param  <Wayne Shih> 23-Mar-2022
+        response = self.kd35_client.put(url, {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors'],
+            'Request is missing param(s): nickname/avatar. '
+            'At least one missing param is required to provide.'
+        )
+
+        # lbj23 update an invalid nickname  <Wayne Shih> 23-Mar-2022
+        invalid_nickname = '1' * 200
+        response = self.lbj23_client.put(url, {'nickname': invalid_nickname})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors']['nickname'][0],
+            'Ensure this field has no more than 100 characters.'
+        )
+
+        # lbj23 update an invalid avatar  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.put(url, {'avatar': 'invalid avatar'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors']['avatar'][0],
+            'The submitted data was not a file. Check the encoding type on the form.'
+        )
+
+        # lbj23 update his nickname  <Wayne Shih> 23-Mar-2022
+        response = self.lbj23_client.put(url, {'nickname': 'new nickname'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['nickname'], 'new nickname')
+        self.assertEqual(response.data['avatar'], self.lbj23.profile.avatar)
+
+        # lbj23 update his avatar  <Wayne Shih> 23-Mar-2022
+        self.lbj23.profile.refresh_from_db()
+        response = self.lbj23_client.put(url, {
+            'avatar': SimpleUploadedFile(
+                name='lbj-avatar.jpg',
+                content=str.encode('a fake image'),
+                content_type='image/jpeg',
+            ),
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['nickname'], self.lbj23.profile.nickname)
+        self.assertEqual('lbj-avatar' in response.data['avatar'], True)
+
+        # lbj23 update his nickname & avatar  <Wayne Shih> 23-Mar-2022
+        self.lbj23.profile.refresh_from_db()
+        response = self.lbj23_client.put(url, {
+            'nickname': 'king lbj',
+            'avatar': SimpleUploadedFile(
+                name='king-lbj-photo.jpg',
+                content=str.encode('GOAT image'),
+                content_type='image/jpeg',
+            ),
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['nickname'], 'king lbj')
+        self.assertEqual('king-lbj-photo' in response.data['avatar'], True)
