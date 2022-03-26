@@ -10,14 +10,17 @@
 # 07-Sep-2021  Wayne Shih              React to refactoring TestCase
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 24-Feb-2022  Wayne Shih              Add tests for likes model
+# 25-Mar-2022  Wayne Shih              Add tests for TweetPhotos model
 # $HISTORY$
 # =================================================================================================
 
 
 from datetime import date, timedelta
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from testing.testcases import TestCase
-from tweets.models import Tweet
+from tweets.models import Tweet, TweetPhoto
 from utils.time_helpers import utc_now
 
 
@@ -94,3 +97,65 @@ class TweetTest(TestCase):
         self.assertEqual(like.user.username in str(like), True)
         self.assertEqual(str(like.content_type) in str(like), True)
         self.assertEqual(str(like.object_id) in str(like), True)
+
+
+class TweetPhotoTest(TestCase):
+
+    def setUp(self):
+        self.lbj23 = self.create_user(username='cavs_lbj23')
+        self.lbj23_tweet = self.create_tweet(self.lbj23, 'This is 4 u!')
+        self.kb24 = self.create_user(username='kobe24')
+        self.sc30 = self.create_user(username='curry', password='sc30')
+
+    def test_tweet_photo_model_attributes(self):
+        self.assertEqual(hasattr(TweetPhoto, 'id'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'tweet'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'tweet_id'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'user'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'user_id'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'file'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'created_at'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'status'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'order'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'has_deleted'), True)
+        self.assertEqual(hasattr(TweetPhoto, 'deleted_at'), True)
+
+    def test_tweet_photo_model(self):
+        self.assertEqual(TweetPhoto.objects.all().count(), 0)
+        photo = TweetPhoto.objects.create(
+            tweet=self.lbj23_tweet,
+            user=self.lbj23,
+            file=SimpleUploadedFile(
+                name='king-tweet-photo.jpg',
+                content=str.encode('GOAT image'),
+                content_type='image/jpeg',
+            ),
+        )
+        self.assertEqual(TweetPhoto.objects.all().count(), 1)
+        self.assertEqual(photo.user, self.lbj23)
+        self.assertEqual(photo.tweet, self.lbj23_tweet)
+        self.assertEqual('king-tweet-photo' in str(photo.file), True)
+        self.assertEqual(photo.created_at.day, date.today().day)
+
+    def test_str(self):
+        photo = TweetPhoto.objects.create(
+            tweet=self.lbj23_tweet,
+            user=self.lbj23,
+            file=SimpleUploadedFile(
+                name='goat-tweet-photo.jpg',
+                content=str.encode('GOAT image'),
+                content_type='image/jpeg',
+            ),
+        )
+        message = 'TweetPhoto-[{id}] in tweet-[{tweet_id}] by [{user}]-[{user_id}] ' \
+                  'with order-[{order}] created at [{created_at}].\n' \
+                  'File: [{file}]'
+        self.assertEqual(message.format(
+            id=photo.id,
+            tweet_id=photo.tweet_id,
+            user=photo.user,
+            user_id=photo.user_id,
+            order=photo.order,
+            created_at=photo.created_at,
+            file=photo.file,
+        ), str(photo))
