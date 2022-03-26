@@ -16,6 +16,7 @@
 # 05-Nov-2021  Wayne Shih              Fix pylint checks
 # 24-Feb-2022  Wayne Shih              Add like_set as relationships “backward”
 # 26-Feb-2022  Wayne Shih              Add comments for ContentType
+# 25-Mar-2022  Wayne Shih              Add TweetPhoto model
 # $HISTORY$
 # =================================================================================================
 
@@ -25,6 +26,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from likes.models import Like
+from tweets.constants import TWEET_PHOTO_STATUS_CHOICES, TweetPhotoStatus
 from utils.time_helpers import utc_now
 
 
@@ -64,3 +66,42 @@ class Tweet(models.Model):
             content_type=content_type,
             object_id=self.id,
         ).order_by('-created_at')
+
+
+class TweetPhoto(models.Model):
+    tweet = models.ForeignKey(Tweet, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    file = models.FileField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # <Wayne Shih> 25-Mar-2022
+    # https://docs.djangoproject.com/en/4.0/ref/models/fields/#django.db.models.Field.choices
+    status = models.IntegerField(
+        default=TweetPhotoStatus.PENDING,
+        choices=TWEET_PHOTO_STATUS_CHOICES,
+    )
+    order = models.IntegerField(default=0)
+    has_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        index_together = (
+            ('tweet_id', 'status', 'order'),
+            ('user_id', 'created_at'),
+            ('has_deleted', 'created_at'),
+            ('status', 'created_at'),
+        )
+        ordering = ('tweet_id', 'status', 'order')
+
+    def __str__(self):
+        message = 'TweetPhoto-[{id}] in tweet-[{tweet_id}] by [{user}]-[{user_id}] ' \
+                  'with order-[{order}] created at [{created_at}].\n' \
+                  'File: [{file}]'
+        return message.format(
+            id=self.id,
+            tweet_id=self.tweet_id,
+            user=self.user,
+            user_id=self.user_id,
+            order=self.order,
+            created_at=self.created_at,
+            file=self.file,
+        )
