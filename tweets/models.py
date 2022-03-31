@@ -17,6 +17,7 @@
 # 24-Feb-2022  Wayne Shih              Add like_set as relationships “backward”
 # 26-Feb-2022  Wayne Shih              Add comments for ContentType
 # 25-Mar-2022  Wayne Shih              Add TweetPhoto model
+# 30-Mar-2022  Wayne Shih              Update TweetPhoto model's index
 # $HISTORY$
 # =================================================================================================
 
@@ -87,7 +88,7 @@ class TweetPhoto(models.Model):
         index_together = (
             ('tweet_id', 'status', 'order'),
             ('user_id', 'created_at'),
-            ('has_deleted', 'created_at'),
+            ('has_deleted', 'deleted_at'),
             ('status', 'created_at'),
         )
         ordering = ('tweet_id', 'status', 'order')
