@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload multiple files</title>
+</head>
+<body>
+    <div class="form-group ">
+        <label class="col-sm-2 control-label ">
+            Photo files
+        </label>
+
+        <div id="fileInputControl" class="col-sm-10">
+            {# <Wayne Shih> 27-Mar-2022 #}
+            {# https://developer.mozilla.org/en-US/docs/web/CSS/height #}
+            <form method="post" enctype="multipart/form-data">
+                <input
+                    type="button"
+                    value="Add photos"
+                    onclick="onClickAddPhotos()"
+                    style="height:auto; width:auto; top:0; left:0"
+                >
+                 <input
+                     type="reset"
+                     value="Reset"
+                     onclick="onClockReset()"
+                     style="height:auto; width:auto; top:0; left:0"
+                 >
+            </form>
+
+            {# <Wayne Shih> 27-Mar-2022 #}
+            {# https://www.w3schools.com/jquery/jquery_get_started.asp #}
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script type="text/javascript">
+                {# <Wayne Shih> 27-Mar-2022 #}
+                {# https://www.w3schools.com/tags/att_input_multiple.asp #}
+                {# https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#using_file_inputs #}
+                function onClickAddPhotos() {
+                    $('#fileInputControl').append(
+                        '<input type="file" id="selectFiles" name="photo_files" accept="image/*" multiple="multiple">'
+                    );
+                }
+
+                {# <Wayne Shih> 27-Mar-2022 #}
+                {# https://www.w3schools.com/jquery/jquery_ref_selectors.asp #}
+                {# https://www.w3schools.com/jquery/jquery_dom_remove.asp #}
+                function onClockReset() {
+                    $(":file").remove();
+                }
+            </script>
+        </div>
+    </div>
+</body>
+</html>
+
+
