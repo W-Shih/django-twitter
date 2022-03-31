@@ -11,6 +11,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 24-Feb-2022  Wayne Shih              Add tests for likes model
 # 25-Mar-2022  Wayne Shih              Add tests for TweetPhotos model
+# 30-Mar-2022  Wayne Shih              Add more tests for TweetPhotos model
 # $HISTORY$
 # =================================================================================================
 
@@ -122,6 +123,7 @@ class TweetPhotoTest(TestCase):
 
     def test_tweet_photo_model(self):
         self.assertEqual(TweetPhoto.objects.all().count(), 0)
+        self.assertEqual(self.lbj23_tweet.tweetphoto_set.count(), 0)
         photo = TweetPhoto.objects.create(
             tweet=self.lbj23_tweet,
             user=self.lbj23,
@@ -132,6 +134,7 @@ class TweetPhotoTest(TestCase):
             ),
         )
         self.assertEqual(TweetPhoto.objects.all().count(), 1)
+        self.assertEqual(self.lbj23_tweet.tweetphoto_set.count(), 1)
         self.assertEqual(photo.user, self.lbj23)
         self.assertEqual(photo.tweet, self.lbj23_tweet)
         self.assertEqual('king-tweet-photo' in str(photo.file), True)

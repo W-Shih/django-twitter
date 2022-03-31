@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 25-Mar-2022  Wayne Shih              Initial create
+# 30-Mar-2022  Wayne Shih              Add TWEET_PHOTOS_UPLOAD_LIMIT
 # $HISTORY$
 # =================================================================================================
 
@@ -22,3 +23,5 @@ TWEET_PHOTO_STATUS_CHOICES = (
     (TweetPhotoStatus.APPROVED, 'Approved'),
     (TweetPhotoStatus.REJECTED, 'Rejected'),
 )
+
+TWEET_PHOTOS_UPLOAD_LIMIT = 4

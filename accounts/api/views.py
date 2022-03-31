@@ -16,6 +16,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2021  Wayne Shih              Enhance account api by decorator and GenericViewSet
 # 23-Mar-2022  Wayne Shih              Add UserProfileViewSet, update UserViewSet only for superuser
+# 30-Mar-2022  Wayne Shih              Fix typo
 # $HISTORY$
 # =================================================================================================
 
@@ -89,7 +90,7 @@ class AccountViewSet(viewsets.GenericViewSet):
                 },
                 'Log in': {
                     'method': 'POST',
-                    'url': 'api/accounts/login/',
+                    'url': '/api/accounts/login/',
                 },
                 'Sign up': {
                     'method': 'POST',

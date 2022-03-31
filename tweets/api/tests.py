@@ -15,15 +15,17 @@
 # 23-Feb-2022  Wayne Shih              Add a test for tweet list api
 # 12-Mar-2022  Wayne Shih              React to serializer changes
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
+# 30-Mar-2022  Wayne Shih              React to adding tweet photo and add tests for tweet photo
 # $HISTORY$
 # =================================================================================================
 
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from testing.testcases import TestCase
-from tweets.models import Tweet
+from tweets.models import Tweet, TweetPhoto
 
 
 TWEET_LIST_URL = '/api/tweets/'
@@ -76,7 +78,16 @@ class TweetApiTests(TestCase):
         self.assertEqual(len(tweets), 3)
         self.assertEqual(
             set(tweets[0].keys()),
-            {'id', 'user', 'created_at', 'content', 'comments_count', 'has_liked', 'likes_count'}
+            {
+                'id',
+                'user',
+                'created_at',
+                'content',
+                'comments_count',
+                'has_liked',
+                'likes_count',
+                'photo_urls',
+            }
         )
         # <Wayne Shih> 06-Sep-2021
         # test order by '-created_at'
@@ -98,20 +109,30 @@ class TweetApiTests(TestCase):
             True
         )
 
+    # <Wayne Shih> 28-Mar-2022
+    # Test create a tweet without tweet photos
     def test_create_api(self):
+        # <Wayne Shih> 28-Mar-2022
+        # Not login user can't tweet
         response = self.anonymous_client.post(TWEET_CREATE_URL)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+        # <Wayne Shih> 28-Mar-2022
+        # Missing param(s): content
         response = self.user1_client.post(TWEET_CREATE_URL)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
 
+        # <Wayne Shih> 28-Mar-2022
+        # content is too short
         response = self.user1_client.post(TWEET_CREATE_URL, {'content': '123'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
 
+        # <Wayne Shih> 28-Mar-2022
+        # content is too long
         response = self.user1_client.post(TWEET_CREATE_URL, {
             'content': '1' * 256
         })
@@ -119,6 +140,8 @@ class TweetApiTests(TestCase):
         self.assertEqual(response.data['success'], False)
         self.assertEqual(response.data['message'], 'Please check input.')
 
+        # <Wayne Shih> 28-Mar-2022
+        # Login user tweets successfully
         tweets_count = Tweet.objects.count()
         response = self.user1_client.post(TWEET_CREATE_URL, {
             'content': 'I am the King James!'
@@ -135,8 +158,132 @@ class TweetApiTests(TestCase):
         })
         self.assertEqual(
             set(response.data.keys()),
-            {'id', 'user', 'created_at', 'content', 'comments_count', 'has_liked', 'likes_count'}
+            {
+                'id',
+                'user',
+                'created_at',
+                'content',
+                'comments_count',
+                'has_liked',
+                'likes_count',
+                'photo_urls',
+            }
         )
+
+    def test_create_with_photos(self):
+        # <Wayne Shih> 28-Mar-2022
+        # Login user tweets a photo without content
+        response = self.user1_client.post(TWEET_CREATE_URL, {
+            'photo_files': [
+                SimpleUploadedFile(
+                    name='photo-without-content.jpg',
+                    content=str.encode('photo-without-content image'),
+                    content_type='image/jpeg',
+                ),
+            ],
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+
+        # <Wayne Shih> 28-Mar-2022
+        # Test login user still compatible to tweet content only
+        response = self.user1_client.post(TWEET_CREATE_URL, {'content': 'only content'})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['user']['id'], self.user1.id)
+        self.assertEqual(response.data['content'], 'only content')
+        self.assertEqual(TweetPhoto.objects.count(), 0)
+        self.assertEqual(len(response.data['photo_urls']), 0)
+
+        # <Wayne Shih> 28-Mar-2022
+        # Test login user still compatible to tweet content only
+        response = self.user1_client.post(TWEET_CREATE_URL, {
+            'content': 'content with empty photo file list',
+            'photo_files': []
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['user']['id'], self.user1.id)
+        self.assertEqual(response.data['content'], 'content with empty photo file list')
+        self.assertEqual(len(response.data['photo_urls']), 0)
+        self.assertEqual(TweetPhoto.objects.count(), 0)
+
+        # <Wayne Shih> 28-Mar-2022
+        # Login user tweets content with a photo
+        response = self.user1_client.post(TWEET_CREATE_URL, {
+            'content': 'Chasing the GOAT!!',
+            'photo_files': [
+                SimpleUploadedFile(
+                    name='chasing-GOAT-photo.jpg',
+                    content=str.encode('chasing-GOAT image'),
+                    content_type='image/jpeg',
+                ),
+            ],
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['user']['id'], self.user1.id)
+        self.assertEqual(response.data['content'], 'Chasing the GOAT!!')
+        self.assertEqual(len(response.data['photo_urls']), 1)
+        self.assertEqual('chasing-GOAT-photo' in response.data['photo_urls'][0], True)
+
+        # <Wayne Shih> 28-Mar-2022
+        # Login user tweets content with 4 photos and
+        # check photos order as uploaded
+        response = self.user1_client.post(TWEET_CREATE_URL, {
+            'content': 'My NBA titles',
+            'photo_files': [
+                SimpleUploadedFile(
+                    name='my-titles-heat-1.jpg',
+                    content=str.encode('my-titles-heat-1 image'),
+                    content_type='image/jpeg',
+                ),
+                SimpleUploadedFile(
+                    name='my-titles-heat-2.jpg',
+                    content=str.encode('my-titles-heat-2 image'),
+                    content_type='image/jpeg',
+                ),
+                SimpleUploadedFile(
+                    name='my-titles-cavs.jpg',
+                    content=str.encode('my-titles-cavs image'),
+                    content_type='image/jpeg',
+                ),
+                SimpleUploadedFile(
+                    name='my-titles-lakers.jpg',
+                    content=str.encode('my-titles-lakers image'),
+                    content_type='image/jpeg',
+                ),
+            ],
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['user']['id'], self.user1.id)
+        self.assertEqual(response.data['content'], 'My NBA titles')
+        self.assertEqual(len(response.data['photo_urls']), 4)
+        self.assertEqual('my-titles-heat-1' in response.data['photo_urls'][0], True)
+        self.assertEqual('my-titles-heat-2' in response.data['photo_urls'][1], True)
+        self.assertEqual('my-titles-cavs' in response.data['photo_urls'][2], True)
+        self.assertEqual('my-titles-lakers' in response.data['photo_urls'][3], True)
+
+        # <Wayne Shih> 28-Mar-2022
+        # Login user tweets content with 5 photos
+        photo_count = TweetPhoto.objects.count()
+        response = self.user1_client.post(TWEET_CREATE_URL, {
+            'content': 'lakers starters',
+            'photo_files': [
+                SimpleUploadedFile(
+                    name=f'lakers-starters-{index}.jpg',
+                    content=str.encode(f'lakers-starters-{index} image'),
+                    content_type='image/jpeg',
+                )
+                for index in range(5)
+            ],
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['success'], False)
+        self.assertEqual(response.data['message'], 'Please check input.')
+        self.assertEqual(
+            response.data['errors']['photo_files'][0],
+            'Ensure this field has no more than 4 elements.'
+        )
+        self.assertEqual(TweetPhoto.objects.count(), photo_count)
 
     def test_retrieve_api(self):
         # Non-existing tweet
@@ -162,6 +309,7 @@ class TweetApiTests(TestCase):
                 'likes_count',
                 'comments',
                 'likes',
+                'photo_urls',
             }
         )
         self.assertEqual(
@@ -192,3 +340,33 @@ class TweetApiTests(TestCase):
             response.data['comments'][1]['created_at'],
             True
         )
+
+    def test_retrieve_with_photos(self):
+        tweet_id = self.user1_client.post(TWEET_CREATE_URL, {
+            'content': 'titles',
+            'photo_files': [
+                SimpleUploadedFile(
+                    name='retrieve-titles-cavs.jpg',
+                    content=str.encode('retrieve-titles-cavs image'),
+                    content_type='image/jpeg',
+                ),
+                SimpleUploadedFile(
+                    name='retrieve-titles-heat-1.jpg',
+                    content=str.encode('retrieve-titles-heat-1 image'),
+                    content_type='image/jpeg',
+                ),
+                SimpleUploadedFile(
+                    name='retrieve-titles-lakers.jpg',
+                    content=str.encode('retrieve-titles-lakers image'),
+                    content_type='image/jpeg',
+                ),
+            ],
+        }).data['id']
+
+        url = TWEET_RETRIEVE_URL.format(tweet_id)
+        response = self.anonymous_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['photo_urls']), 3)
+        self.assertEqual('retrieve-titles-cavs' in response.data['photo_urls'][0], True)
+        self.assertEqual('retrieve-titles-heat-1' in response.data['photo_urls'][1], True)
+        self.assertEqual('retrieve-titles-lakers' in response.data['photo_urls'][2], True)

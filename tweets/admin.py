@@ -10,6 +10,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 13-Nov-2021  Wayne Shih              Add id
 # 25-Mar-2022  Wayne Shih              Add TweetPhotoAdmin
+# 30-Mar-2022  Wayne Shih              Add filter for TweetPhotoAdmin
 # $HISTORY$
 # =================================================================================================
 
@@ -43,3 +44,4 @@ class TweetPhotoAdmin(admin.ModelAdmin):
         'created_at',
         'has_deleted',
     )
+    list_filter = ('status', 'has_deleted')
