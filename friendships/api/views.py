@@ -12,6 +12,7 @@
 # 08-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2021  Wayne Shih              Change default serializer
+# 02-Apr-2022  Wayne Shih              Add friendships pagination
 # $HISTORY$
 # =================================================================================================
 
@@ -23,6 +24,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from friendships.api.pagination import FriendshipPagination
 from friendships.api.serializers import (
     DefaultFriendshipSerializer,
     FollowerSerializer,
@@ -35,6 +37,16 @@ from friendships.models import Friendship
 class FriendshipViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = DefaultFriendshipSerializer
+    pagination_class = FriendshipPagination
+
+    # <Wayne Shih> 02-Apr-2022
+    # TODO:
+    #   Remove this method after front-end & app-end deprecate keys 'followings' & 'followers'.
+    def _get_paginated_response(self, data, deprecated_key=None):
+        assert self.paginator is not None
+        if not deprecated_key:
+            return self.paginator.get_paginated_response(data)
+        return self.paginator.get_customized_paginated_response(data, deprecated_key)
 
     def list(self, request):
         return Response({
@@ -62,19 +74,25 @@ class FriendshipViewSet(viewsets.GenericViewSet):
     def followers(self, request, pk):
         to_user = self.get_object()
         followers = Friendship.objects.filter(to_user_id=to_user.id).order_by('-created_at')
-        # print(followers[0].from_user)
-        return Response({
-            'followers': FollowerSerializer(followers, many=True).data,
-        }, status=status.HTTP_200_OK)
+        # <Wayne Shih> 02-Apr-2022
+        # https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing
+        page = self.paginate_queryset(followers)
+        serializer = FollowerSerializer(page, many=True)
+        # <Wayne Shih> 02-Apr-2022
+        # TODO:
+        #   Remove key 'followers' after front-end & app-end deprecate it.
+        return self._get_paginated_response(serializer.data, 'followers')
 
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
     def followings(self, request, pk):
         from_user = self.get_object()
         followings = Friendship.objects.filter(from_user_id=from_user.id).order_by('-created_at')
-        # print(followings[0].from_user)
-        return Response({
-            'followings': FollowingSerializer(followings, many=True).data,
-        }, status=status.HTTP_200_OK)
+        page = self.paginate_queryset(followings)
+        serializer = FollowingSerializer(page, many=True)
+        # <Wayne Shih> 02-Apr-2022
+        # TODO:
+        #   Remove key 'followings' after front-end & app-end deprecate it.
+        return self._get_paginated_response(serializer.data, 'followings')
 
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
     def follow(self, request: Request, pk):

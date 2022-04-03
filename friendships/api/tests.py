@@ -12,13 +12,17 @@
 # 06-Nov-2021  Wayne Shih              Modify some assertEqual to check set instead of list
 # 13-Nov-2021  Wayne Shih              Update non_existing_user_id larger to Fix test fail
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
+# 02-Apr-2022  Wayne Shih              Add tests for friendships pagination
 # $HISTORY$
 # =================================================================================================
 
 
+from math import ceil
+
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from friendships.api.pagination import FriendshipPagination
 from friendships.models import Friendship
 from testing.testcases import TestCase
 
@@ -40,6 +44,9 @@ class FriendshipApiTests(TestCase):
         self.mj23 = self.create_user(username='mj23')
         self.mj23_client = APIClient()
         self.mj23_client.force_authenticate(self.mj23)
+
+        self.kb24, self.kb24_client = self.create_user_and_auth_client(username='kb24')
+        self.kd35, self.kd35_client = self.create_user_and_auth_client(username='kd35')
 
         for i in range(2):
             follower = self.create_user(username=f'lbj23_follower{i}')
@@ -193,3 +200,96 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['num_deleted'], 0)
         self.assertEqual(Friendship.objects.count(), count)
+
+    def test_friendship_pagination(self):
+        page_size = FriendshipPagination.page_size
+        max_page_size = FriendshipPagination.max_page_size
+
+        # test FOLLOWINGS_URL - no pagination params  <Wayne Shih> 02-Apr-2022
+        url = FOLLOWINGS_URL.format(self.kd35.id)
+        num_followings = page_size * 3
+        for i in range(num_followings):
+            following = self.create_user(username=f'kd35_following{i}')
+            Friendship.objects.create(from_user=self.kd35, to_user=following)
+
+        response = self.anonymous_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(isinstance(response.data['results'], list), True)
+        self.assertEqual(len(response.data['results']), page_size)
+        self.assertEqual(response.data['count'], num_followings)
+        self.assertEqual(response.data['has_previous'], False)
+        self.assertEqual(response.data['has_next'], True)
+        self.assertEqual(response.data['previous'], None)
+        self.assertEqual('?page=2' in response.data['next'], True)
+        self.assertEqual(response.data['num_pages'], ceil(num_followings / page_size))
+        self.assertEqual(response.data['page_number'], 1)
+
+        # <Wayne Shih> 02-Apr-2022
+        # test FOLLOWINGS_URL - customized page_size won't exceed max_page_size
+        response = self.anonymous_client.get(url, {'page_size': max_page_size + 1})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(isinstance(response.data['results'], list), True)
+        self.assertEqual(len(response.data['results']), min(max_page_size, num_followings))
+        self.assertEqual(response.data['count'], num_followings)
+        self.assertEqual(response.data['has_previous'], False)
+        self.assertEqual(response.data['has_next'], num_followings > max_page_size)
+        self.assertEqual(response.data['previous'], None)
+        if num_followings > max_page_size:
+            self.assertEqual('?page=2' in response.data['next'], True)
+        else:
+            self.assertEqual(response.data['next'], None)
+        self.assertEqual(response.data['num_pages'], ceil(num_followings / (max_page_size + 1)))
+        self.assertEqual(response.data['page_number'], 1)
+
+        # test FOLLOWINGS_URL - non-existing page number  <Wayne Shih> 02-Apr-2022
+        non_existing_page_num = 0
+        response = self.anonymous_client.get(url, {'page': non_existing_page_num})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Invalid page.')
+
+        non_existing_page_num = ceil(num_followings / page_size) + 1
+        response = self.anonymous_client.get(url, {'page': non_existing_page_num})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Invalid page.')
+
+        # test FOLLOWERS_URL - no pagination params  <Wayne Shih> 02-Apr-2022
+        url = FOLLOWERS_URL.format(self.kb24.id)
+        num_followers = page_size - 1
+        for i in range(num_followers):
+            follower = self.create_user(username=f'kb24_follower{i}')
+            Friendship.objects.create(from_user=follower, to_user=self.kb24)
+
+        response = self.anonymous_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), num_followers)
+        self.assertEqual(response.data['count'], num_followers)
+        self.assertEqual(response.data['has_previous'], False)
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['previous'], None)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(response.data['num_pages'], ceil(num_followers / page_size))
+        self.assertEqual(response.data['page_number'], 1)
+
+        # test FOLLOWERS_URL - pagination params  <Wayne Shih> 02-Apr-2022
+        customized_page_size = page_size // 2
+        response = self.anonymous_client.get(url, {'page_size': customized_page_size})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), customized_page_size)
+        self.assertEqual(response.data['count'], num_followers)
+        self.assertEqual(response.data['previous'], None)
+        self.assertEqual(f'?page=2&page_size={customized_page_size}' in response.data['next'], True)
+        self.assertEqual(response.data['has_previous'], False)
+        self.assertEqual(response.data['has_next'], True)
+        self.assertEqual(response.data['num_pages'], ceil(num_followers / customized_page_size))
+        self.assertEqual(response.data['page_number'], 1)
+
+        response = self.anonymous_client.get(url, {'page': 2, 'page_size': customized_page_size})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], num_followers)
+        self.assertEqual(len(response.data['results']), num_followers - customized_page_size)
+        self.assertEqual(response.data['has_previous'], True)
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(f'?page_size={customized_page_size}' in response.data['previous'], True)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(response.data['num_pages'], ceil(num_followers / customized_page_size))
+        self.assertEqual(response.data['page_number'], 2)
