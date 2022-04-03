@@ -14,6 +14,7 @@
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # 02-Apr-2022  Wayne Shih              Add tests for friendships pagination
 # 03-Apr-2022  Wayne Shih              Add tests for followers & followings pagination, react to adding has_followed
+# 03-Apr-2022  Wayne Shih              React to deprecating keys in friendships apis
 # $HISTORY$
 # =================================================================================================
 
@@ -72,7 +73,7 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         response = self.anonymous_client.get(url)
-        followers = response.data['followers']
+        followers = response.data['results']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(isinstance(followers, list), True)
         self.assertEqual(len(followers), 2)
@@ -105,7 +106,7 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         response = self.anonymous_client.get(url)
-        followings = response.data['followings']
+        followings = response.data['results']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(isinstance(followings, list), True)
         self.assertEqual(len(followings), 3)
