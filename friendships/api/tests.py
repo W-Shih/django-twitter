@@ -310,13 +310,10 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), page_size)
         self.assertEqual(response.data['count'], num_followers)
-        for i in range(page_size):
-            user_id = response.data['results'][i]['from_user']['id']
-            has_kd_followed = response.data['results'][i]['has_followed']
-            if user_id % 2 == 0:
-                self.assertEqual(has_kd_followed, True)
-            else:
-                self.assertEqual(has_kd_followed, False)
+        for result in response.data['results']:
+            user_id = result['from_user']['id']
+            has_kd_followed = (user_id % 2 == 0)
+            self.assertEqual(result['has_followed'], has_kd_followed)
         self.assertEqual(response.data['previous'], None)
         self.assertEqual('?page=2' in response.data['next'], True)
         self.assertEqual(response.data['has_previous'], False)
@@ -329,9 +326,8 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], num_followers)
         self.assertEqual(len(response.data['results']), page_size)
-        for i in range(page_size):
-            has_anonymous_followed = response.data['results'][i]['has_followed']
-            self.assertEqual(has_anonymous_followed, False)
+        for result in response.data['results']:
+            self.assertEqual(result['has_followed'], False)
         self.assertEqual(response.data['num_pages'], ceil(num_followers / page_size))
         self.assertEqual(response.data['page_number'], 2)
         self.assertEqual(response.data['previous'].endswith('/followers/'), True)
@@ -354,9 +350,8 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), page_size)
         self.assertEqual(response.data['count'], num_followings)
-        for i in range(page_size):
-            has_kd_followed = response.data['results'][i]['has_followed']
-            self.assertEqual(has_kd_followed, True)
+        for result in response.data['results']:
+            self.assertEqual(result['has_followed'], True)
         self.assertEqual(response.data['num_pages'], ceil(num_followings / page_size))
         self.assertEqual(response.data['page_number'], 1)
         self.assertEqual(response.data['previous'], None)
@@ -375,20 +370,16 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.data['has_next'], True)
         self.assertEqual(response.data['previous'], None)
         self.assertEqual('?page=2' in response.data['next'], True)
-        for i in range(page_size):
-            user_id = response.data['results'][i]['user']['id']
-            has_kb_followed = response.data['results'][i]['has_followed']
-            if user_id % 2 == 0:
-                self.assertEqual(has_kb_followed, True)
-            else:
-                self.assertEqual(has_kb_followed, False)
+        for result in response.data['results']:
+            user_id = result['user']['id']
+            has_kb_followed = (user_id % 2 == 0)
+            self.assertEqual(result['has_followed'], has_kb_followed)
 
         # anonymous hasn't followed any user  <Wayne Shih> 03-Apr-2022
         response = self.anonymous_client.get(url, {'page': 2})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        for i in range(page_size):
-            has_anonymous_followed = response.data['results'][i]['has_followed']
-            self.assertEqual(has_anonymous_followed, False)
+        for result in response.data['results']:
+            self.assertEqual(result['has_followed'], False)
         self.assertEqual(response.data['has_previous'], True)
         self.assertEqual(response.data['has_next'], False)
         self.assertEqual(response.data['previous'].endswith('/followings/'), True)
