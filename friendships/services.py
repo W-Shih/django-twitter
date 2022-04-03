@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 18-Oct-2021  Wayne Shih              Initial create
+# 03-Apr-2022  Wayne Shih              Add get_has_followed()
 # $HISTORY$
 # =================================================================================================
 
@@ -69,3 +70,7 @@ class FriendshipService(object):
         ).prefetch_related('from_user')
         followers = [friendship.from_user for friendship in follower_friendships]
         return followers
+
+    @classmethod
+    def get_has_followed(cls, from_user, to_user):
+        return Friendship.objects.filter(from_user=from_user, to_user=to_user).exists()

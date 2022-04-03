@@ -13,6 +13,7 @@
 # 13-Nov-2021  Wayne Shih              Update non_existing_user_id larger to Fix test fail
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # 02-Apr-2022  Wayne Shih              Add tests for friendships pagination
+# 03-Apr-2022  Wayne Shih              Add tests for followers & followings pagination, react to adding has_followed
 # $HISTORY$
 # =================================================================================================
 
@@ -75,7 +76,7 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(isinstance(followers, list), True)
         self.assertEqual(len(followers), 2)
-        self.assertEqual(set(followers[0].keys()), {'from_user', 'created_at'})
+        self.assertEqual(set(followers[0].keys()), {'from_user', 'created_at', 'has_followed'})
         self.assertEqual(
             set(followers[0].get('from_user')),
             {'id', 'username', 'nickname', 'avatar_url'}
@@ -108,7 +109,7 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(isinstance(followings, list), True)
         self.assertEqual(len(followings), 3)
-        self.assertEqual(set(followings[0].keys()), {'user', 'created_at'})
+        self.assertEqual(set(followings[0].keys()), {'user', 'created_at', 'has_followed'})
         self.assertEqual(
             set(followings[0].get('user')),
             {'id', 'username', 'nickname', 'avatar_url'}
@@ -152,7 +153,7 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(set(response.data.keys()), {'success', 'following'})
         self.assertEqual(
             set(response.data['following'].keys()),
-            {'user', 'created_at'}
+            {'user', 'created_at', 'has_followed'}
         )
         self.assertEqual(response.data['following']['user']['id'], self.mj23.id)
 
@@ -201,7 +202,7 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(response.data['num_deleted'], 0)
         self.assertEqual(Friendship.objects.count(), count)
 
-    def test_friendship_pagination(self):
+    def test_friendships_pagination(self):
         page_size = FriendshipPagination.page_size
         max_page_size = FriendshipPagination.max_page_size
 
@@ -292,4 +293,98 @@ class FriendshipApiTests(TestCase):
         self.assertEqual(f'?page_size={customized_page_size}' in response.data['previous'], True)
         self.assertEqual(response.data['next'], None)
         self.assertEqual(response.data['num_pages'], ceil(num_followers / customized_page_size))
+        self.assertEqual(response.data['page_number'], 2)
+
+    def test_followers_pagination(self):
+        page_size = FriendshipPagination.page_size
+        url = FOLLOWERS_URL.format(self.kb24.id)
+        num_followers = page_size * 2
+        for i in range(num_followers):
+            user = self.create_user(username=f'kb24_follower{i}')
+            Friendship.objects.create(from_user=user, to_user=self.kb24)
+            if user.id % 2 == 0:
+                Friendship.objects.create(from_user=self.kd35, to_user=user)
+
+        # kd has followed user with even id  <Wayne Shih> 03-Apr-2022
+        response = self.kd35_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), page_size)
+        self.assertEqual(response.data['count'], num_followers)
+        for result in response.data['results']:
+            user_id = result['from_user']['id']
+            has_kd_followed = (user_id % 2 == 0)
+            self.assertEqual(result['has_followed'], has_kd_followed)
+        self.assertEqual(response.data['previous'], None)
+        self.assertEqual('?page=2' in response.data['next'], True)
+        self.assertEqual(response.data['has_previous'], False)
+        self.assertEqual(response.data['has_next'], True)
+        self.assertEqual(response.data['num_pages'], ceil(num_followers / page_size))
+        self.assertEqual(response.data['page_number'], 1)
+
+        # anonymous hasn't followed any user  <Wayne Shih> 03-Apr-2022
+        response = self.anonymous_client.get(url, {'page': 2})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], num_followers)
+        self.assertEqual(len(response.data['results']), page_size)
+        for result in response.data['results']:
+            self.assertEqual(result['has_followed'], False)
+        self.assertEqual(response.data['num_pages'], ceil(num_followers / page_size))
+        self.assertEqual(response.data['page_number'], 2)
+        self.assertEqual(response.data['previous'].endswith('/followers/'), True)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(response.data['has_previous'], True)
+        self.assertEqual(response.data['has_next'], False)
+
+    def test_followings_pagination(self):
+        page_size = FriendshipPagination.page_size
+        url = FOLLOWINGS_URL.format(self.kd35.id)
+        num_followings = page_size * 2
+        for i in range(num_followings):
+            user = self.create_user(username=f'kd35_following{i}')
+            Friendship.objects.create(from_user=self.kd35, to_user=user)
+            if user.id % 2 == 0:
+                Friendship.objects.create(from_user=self.kb24, to_user=user)
+
+        # kd has followed all his followings  <Wayne Shih> 03-Apr-2022
+        response = self.kd35_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), page_size)
+        self.assertEqual(response.data['count'], num_followings)
+        for result in response.data['results']:
+            self.assertEqual(result['has_followed'], True)
+        self.assertEqual(response.data['num_pages'], ceil(num_followings / page_size))
+        self.assertEqual(response.data['page_number'], 1)
+        self.assertEqual(response.data['previous'], None)
+        self.assertEqual('?page=2' in response.data['next'], True)
+        self.assertEqual(response.data['has_previous'], False)
+        self.assertEqual(response.data['has_next'], True)
+
+        # kb has followed user with even id  <Wayne Shih> 03-Apr-2022
+        response = self.kb24_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], num_followings)
+        self.assertEqual(len(response.data['results']), page_size)
+        self.assertEqual(response.data['num_pages'], ceil(num_followings / page_size))
+        self.assertEqual(response.data['page_number'], 1)
+        self.assertEqual(response.data['has_previous'], False)
+        self.assertEqual(response.data['has_next'], True)
+        self.assertEqual(response.data['previous'], None)
+        self.assertEqual('?page=2' in response.data['next'], True)
+        for result in response.data['results']:
+            user_id = result['user']['id']
+            has_kb_followed = (user_id % 2 == 0)
+            self.assertEqual(result['has_followed'], has_kb_followed)
+
+        # anonymous hasn't followed any user  <Wayne Shih> 03-Apr-2022
+        response = self.anonymous_client.get(url, {'page': 2})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for result in response.data['results']:
+            self.assertEqual(result['has_followed'], False)
+        self.assertEqual(response.data['has_previous'], True)
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['previous'].endswith('/followings/'), True)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(response.data['count'], num_followings)
+        self.assertEqual(len(response.data['results']), page_size)
+        self.assertEqual(response.data['num_pages'], ceil(num_followings / page_size))
         self.assertEqual(response.data['page_number'], 2)

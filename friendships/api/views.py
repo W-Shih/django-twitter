@@ -13,6 +13,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 27-Feb-2021  Wayne Shih              Change default serializer
 # 02-Apr-2022  Wayne Shih              Add friendships pagination
+# 03-Apr-2022  Wayne Shih              React to adding has_followed
 # $HISTORY$
 # =================================================================================================
 
@@ -77,7 +78,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         # <Wayne Shih> 02-Apr-2022
         # https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing
         page = self.paginate_queryset(followers)
-        serializer = FollowerSerializer(page, many=True)
+        serializer = FollowerSerializer(page, many=True, context={'request': request})
         # <Wayne Shih> 02-Apr-2022
         # TODO:
         #   Remove key 'followers' after front-end & app-end deprecate it.
@@ -88,7 +89,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         from_user = self.get_object()
         followings = Friendship.objects.filter(from_user_id=from_user.id).order_by('-created_at')
         page = self.paginate_queryset(followings)
-        serializer = FollowingSerializer(page, many=True)
+        serializer = FollowingSerializer(page, many=True, context={'request': request})
         # <Wayne Shih> 02-Apr-2022
         # TODO:
         #   Remove key 'followings' after front-end & app-end deprecate it.
@@ -122,7 +123,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         friendship = serializer.save()
         return Response({
             'success': True,
-            'following': FollowingSerializer(friendship).data,
+            'following': FollowingSerializer(friendship, context={'request': request}).data,
         }, status=status.HTTP_201_CREATED)
 
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
