@@ -9,6 +9,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 02-Apr-2021  Wayne Shih              Initial create
+# 03-Apr-2022  Wayne Shih              React to deprecating keys in friendships apis
 # $HISTORY$
 # =================================================================================================
 
@@ -35,20 +36,4 @@ class FriendshipPagination(PageNumberPagination):
             'has_next': self.page.has_next(),
             'next': self.get_next_link(),
             'results': data,
-        })
-
-    # <Wayne Shih> 02-Apr-2022
-    # TODO:
-    #   Remove this method after front-end & app-end deprecate keys 'followings' & 'followers'.
-    def get_customized_paginated_response(self, data, deprecated_key):
-        return Response({
-            'count': self.page.paginator.count,
-            'num_pages': self.page.paginator.num_pages,
-            'page_number': self.page.number,
-            'has_previous': self.page.has_previous(),
-            'previous': self.get_previous_link(),
-            'has_next': self.page.has_next(),
-            'next': self.get_next_link(),
-            'results': data,
-            f'{str(deprecated_key)}': data,
         })
