@@ -9,6 +9,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 26-Apr-2021  Wayne Shih              Initial create
+# 27-Apr-2021  Wayne Shih              Refactor being under util and rename to EndlessPagination
 # $HISTORY$
 # =================================================================================================
 
@@ -20,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework.utils.urls import replace_query_param
 
 
-class TweetPagination(BasePagination):
+class EndlessPagination(BasePagination):
     page_size = 20
 
     def __init__(self):

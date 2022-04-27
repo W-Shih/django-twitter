@@ -18,6 +18,7 @@
 # 27-Feb-2021  Wayne Shih              Enhance api by decorator
 # 12-Mar-2022  Wayne Shih              React to serializer changes
 # 26-Apr-2022  Wayne Shih              Add endless pagination for list api
+# 27-Apr-2022  Wayne Shih              React to renaming to EndlessPagination
 # $HISTORY$
 # =================================================================================================
 
@@ -34,7 +35,7 @@ from tweets.api.serializers import (
     TweetSerializerForDetail,
 )
 from tweets.models import Tweet
-from tweets.api.pagination import TweetPagination
+from utils.pagination import EndlessPagination
 from utils.decorators import required_params
 
 
@@ -47,7 +48,7 @@ class TweetViewSet(viewsets.GenericViewSet):
     # TODO:
     #   prefetch_related for comments
     queryset = Tweet.objects.all().prefetch_related('user')
-    pagination_class = TweetPagination
+    pagination_class = EndlessPagination
 
     # <Wayne Shih> 26-Apr-2022
     # TODO:
