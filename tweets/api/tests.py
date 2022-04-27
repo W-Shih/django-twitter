@@ -16,7 +16,8 @@
 # 12-Mar-2022  Wayne Shih              React to serializer changes
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # 30-Mar-2022  Wayne Shih              React to adding tweet photo and add tests for tweet photo
-# 26-Apr-2022  Wayne Shih              Add test for tweet list endless pagination
+# 26-Apr-2022  Wayne Shih              Add tests for tweet list endless pagination
+# 27-Apr-2022  Wayne Shih              React to renaming to EndlessPagination
 # $HISTORY$
 # =================================================================================================
 
@@ -28,7 +29,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from testing.testcases import TestCase
-from tweets.api.pagination import TweetPagination
+from utils.pagination import EndlessPagination
 from tweets.models import Tweet, TweetPhoto
 
 
@@ -376,7 +377,7 @@ class TweetApiTests(TestCase):
         self.assertEqual('retrieve-titles-lakers' in response.data['photo_urls'][2], True)
 
     def test_list_pagination(self):
-        page_size = TweetPagination.page_size
+        page_size = EndlessPagination.page_size
 
         kb24 = self.create_user(username='kb24')
         tweets = []
@@ -429,7 +430,7 @@ class TweetApiTests(TestCase):
             'created_at__lt': tweets[page_size * 2 - 1].created_at,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['has_next'], False)
         self.assertEqual(response.data['next'], None)
         self.assertEqual(len(response.data['tweets']), page_size)
         self.assertEqual(response.data['tweets'][0]['id'], tweets[page_size * 2].id)
