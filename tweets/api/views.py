@@ -17,6 +17,7 @@
 # 23-Feb-2022  Wayne Shih              Add TODO: to enhance list api by django-filters
 # 27-Feb-2021  Wayne Shih              Enhance api by decorator
 # 12-Mar-2022  Wayne Shih              React to serializer changes
+# 26-Apr-2022  Wayne Shih              Add endless pagination for list api
 # $HISTORY$
 # =================================================================================================
 
@@ -33,6 +34,7 @@ from tweets.api.serializers import (
     TweetSerializerForDetail,
 )
 from tweets.models import Tweet
+from tweets.api.pagination import TweetPagination
 from utils.decorators import required_params
 
 
@@ -45,6 +47,16 @@ class TweetViewSet(viewsets.GenericViewSet):
     # TODO:
     #   prefetch_related for comments
     queryset = Tweet.objects.all().prefetch_related('user')
+    pagination_class = TweetPagination
+
+    # <Wayne Shih> 26-Apr-2022
+    # TODO:
+    #   Remove this method after front-end & app-end deprecate keys 'tweets'.
+    def _get_paginated_response(self, data, deprecated_key=None):
+        assert self.paginator is not None
+        if not deprecated_key:
+            return self.paginator.get_paginated_response(data)
+        return self.paginator.get_customized_paginated_response(data, deprecated_key)
 
     # <Wayne Shih> 06-Sep-2021
     # - https://www.django-rest-framework.org/api-guide/viewsets/#introspecting-viewset-actions
@@ -78,12 +90,12 @@ class TweetViewSet(viewsets.GenericViewSet):
         #   Here could be enhanced by django-filters
         tweets = Tweet.objects.filter(user_id=user_id).prefetch_related('user')
         # print('--- sql --- \n{}'.format(tweets.query))
-        serializer = TweetSerializer(
-            tweets,
-            many=True,
-            context={'request': request},
-        )
-        return Response({'tweets': serializer.data}, status=status.HTTP_200_OK)
+        page = self.paginate_queryset(tweets)
+        serializer = TweetSerializer(page, many=True, context={'request': request})
+        # <Wayne Shih> 26-Apr-2022
+        # TODO:
+        #   Remove key 'tweets' after front-end & app-end deprecate it.
+        return self._get_paginated_response(serializer.data, 'tweets')
 
     # <Wayne Shih> 06-Sep-2021
     # URL:

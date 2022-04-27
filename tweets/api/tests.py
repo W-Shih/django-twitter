@@ -16,15 +16,19 @@
 # 12-Mar-2022  Wayne Shih              React to serializer changes
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # 30-Mar-2022  Wayne Shih              React to adding tweet photo and add tests for tweet photo
+# 26-Apr-2022  Wayne Shih              Add test for tweet list endless pagination
 # $HISTORY$
 # =================================================================================================
 
+
+from urllib import parse
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from testing.testcases import TestCase
+from tweets.api.pagination import TweetPagination
 from tweets.models import Tweet, TweetPhoto
 
 
@@ -370,3 +374,84 @@ class TweetApiTests(TestCase):
         self.assertEqual('retrieve-titles-cavs' in response.data['photo_urls'][0], True)
         self.assertEqual('retrieve-titles-heat-1' in response.data['photo_urls'][1], True)
         self.assertEqual('retrieve-titles-lakers' in response.data['photo_urls'][2], True)
+
+    def test_list_pagination(self):
+        page_size = TweetPagination.page_size
+
+        kb24 = self.create_user(username='kb24')
+        tweets = []
+        num_tweets = page_size * 3
+        for i in range(num_tweets):
+            tweet = self.create_tweet(kb24, f'kb24::tweet::{i}')
+            tweets.append(tweet)
+        tweets = tweets[::-1]
+
+        # Test the first page of kb24's tweets  <Wayne Shih> 25-Apr-2022
+        response = self.anonymous_client.get(TWEET_LIST_URL, {'user_id': kb24.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['has_next'], True)
+        self.assertEqual(len(response.data['tweets']), page_size)
+        self.assertEqual(response.data['tweets'][0]['id'], tweets[0].id)
+        self.assertEqual(response.data['tweets'][page_size - 1]['id'], tweets[page_size - 1].id)
+        self.assertEqual(
+            str(tweets[page_size - 1].created_at.date()) in parse.unquote(response.data['next']),
+            True
+        )
+        self.assertEqual(
+            str(tweets[page_size - 1].created_at.time()) in parse.unquote(response.data['next']),
+            True
+        )
+
+        # Test the second page of kb24's tweets  <Wayne Shih> 25-Apr-2022
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': kb24.id,
+            'created_at__lt': tweets[page_size - 1].created_at,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['has_next'], True)
+        self.assertEqual(
+            str(tweets[page_size * 2 - 1].created_at.date())
+            in parse.unquote(response.data['next']),
+            True
+        )
+        self.assertEqual(
+            str(tweets[page_size * 2 - 1].created_at.time())
+            in parse.unquote(response.data['next']),
+            True
+        )
+        self.assertEqual(len(response.data['tweets']), page_size)
+        self.assertEqual(response.data['tweets'][0]['id'], tweets[page_size].id)
+        self.assertEqual(response.data['tweets'][page_size - 1]['id'], tweets[page_size * 2 - 1].id)
+
+        # Test the last page of kb24's tweets  <Wayne Shih> 25-Apr-2022
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': kb24.id,
+            'created_at__lt': tweets[page_size * 2 - 1].created_at,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(len(response.data['tweets']), page_size)
+        self.assertEqual(response.data['tweets'][0]['id'], tweets[page_size * 2].id)
+        self.assertEqual(response.data['tweets'][page_size - 1]['id'], tweets[page_size * 3 - 1].id)
+
+        # Test user1's new tweets  <Wayne Shih> 25-Apr-2022
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': kb24.id,
+            'created_at__gt': tweets[0].created_at,
+        })
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(len(response.data['tweets']), 0)
+
+        new_tweet1 = self.create_tweet(kb24, 'kb24::new_tweet::1')
+        new_tweet2 = self.create_tweet(kb24, 'kb24::new_tweet::2')
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': kb24.id,
+            'created_at__gt': tweets[0].created_at,
+        })
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(len(response.data['tweets']), 2)
+        self.assertEqual(response.data['tweets'][0]['id'], new_tweet2.id)
+        self.assertEqual(response.data['tweets'][1]['id'], new_tweet1.id)
