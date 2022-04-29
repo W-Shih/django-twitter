@@ -20,6 +20,7 @@
 # 26-Apr-2022  Wayne Shih              Add endless pagination for list api
 # 27-Apr-2022  Wayne Shih              React to renaming to EndlessPagination
 # 29-Apr-2022  Wayne Shih              Fix query string bug for list api
+# 29-Apr-2022  Wayne Shih              Deprecate key in tweets list api
 # $HISTORY$
 # =================================================================================================
 
@@ -65,15 +66,6 @@ class TweetViewSet(viewsets.GenericViewSet):
     filterset_class = TweetFilter
     pagination_class = EndlessPagination
 
-    # <Wayne Shih> 26-Apr-2022
-    # TODO:
-    #   Remove this method after front-end & app-end deprecate keys 'tweets'.
-    def _get_paginated_response(self, data, deprecated_key=None):
-        assert self.paginator is not None
-        if not deprecated_key:
-            return self.paginator.get_paginated_response(data)
-        return self.paginator.get_customized_paginated_response(data, deprecated_key)
-
     # <Wayne Shih> 06-Sep-2021
     # - https://www.django-rest-framework.org/api-guide/viewsets/#introspecting-viewset-actions
     def get_permissions(self):
@@ -102,10 +94,7 @@ class TweetViewSet(viewsets.GenericViewSet):
         # print('--- sql --- \n{}'.format(tweets.query))
         page = self.paginate_queryset(tweets)
         serializer = TweetSerializer(page, many=True, context={'request': request})
-        # <Wayne Shih> 26-Apr-2022
-        # TODO:
-        #   Remove key 'tweets' after front-end & app-end deprecate it.
-        return self._get_paginated_response(serializer.data, 'tweets')
+        return self.get_paginated_response(serializer.data)
 
     # <Wayne Shih> 06-Sep-2021
     # URL:

@@ -15,6 +15,7 @@
 # 27-Feb-2022  Wayne Shih              React to enhancement by decorator and add tests for update
 # 12-Mar-2022  Wayne Shih              React to serializer changes and add tests for comments_count
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
+# 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
 # $HISTORY$
 # =================================================================================================
 
@@ -331,7 +332,7 @@ class CommentApiTests(TestCase):
             'user_id': self.lbj23.id
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['tweets'][0]['comments_count'], 1)
+        self.assertEqual(response.data['results'][0]['comments_count'], 1)
 
         # test NEWSFEED_LIST_URL
         self.create_comment(self.lbj23, self.tweet)
