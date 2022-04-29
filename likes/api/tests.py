@@ -10,6 +10,7 @@
 # 05-Mar-2022  Wayne Shih              Add tests for like cancel and list APIs
 # 12-Mar-2022  Wayne Shih              Add tests for likes in tweets and comments
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
+# 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
 # $HISTORY$
 # =================================================================================================
 
@@ -332,24 +333,24 @@ class LikeApiTests(TestCase):
             'user_id': self.lbj23.id
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['tweets'][0]['likes_count'], 0)
-        self.assertEqual(response.data['tweets'][0]['has_liked'], False)
+        self.assertEqual(response.data['results'][0]['likes_count'], 0)
+        self.assertEqual(response.data['results'][0]['has_liked'], False)
 
         self.create_like(self.lbj23, self.lbj23_tweet)
         response = self.lbj23_client.get(TWEET_LIST_URL, {
             'user_id': self.lbj23.id
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['tweets'][0]['likes_count'], 1)
-        self.assertEqual(response.data['tweets'][0]['has_liked'], True)
+        self.assertEqual(response.data['results'][0]['likes_count'], 1)
+        self.assertEqual(response.data['results'][0]['has_liked'], True)
 
         # lbj re-liked the same comment
         self.create_like(self.lbj23, self.lbj23_tweet)
         response = self.kd35_client.get(TWEET_LIST_URL, {
             'user_id': self.lbj23.id
         })
-        self.assertEqual(response.data['tweets'][0]['likes_count'], 1)
-        self.assertEqual(response.data['tweets'][0]['has_liked'], False)
+        self.assertEqual(response.data['results'][0]['likes_count'], 1)
+        self.assertEqual(response.data['results'][0]['has_liked'], False)
 
         # test NEWSFEED_LIST_URL
         self.create_like(self.kd35, self.lbj23_tweet)

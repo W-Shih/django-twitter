@@ -19,6 +19,7 @@
 # 26-Apr-2022  Wayne Shih              Add tests for tweet list endless pagination
 # 27-Apr-2022  Wayne Shih              React to renaming to EndlessPagination
 # 29-Apr-2022  Wayne Shih              Add a test with invalid user_id for list api
+# 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
 # $HISTORY$
 # =================================================================================================
 
@@ -83,10 +84,10 @@ class TweetApiTests(TestCase):
             'user_id': non_existing_user_id
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['tweets']), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
         response = self.anonymous_client.get(TWEET_LIST_URL, {'user_id': self.user1.id})
-        tweets = response.data['tweets']
+        tweets = response.data['results']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(isinstance(tweets, list), True)
         self.assertEqual(len(tweets), 3)
@@ -113,13 +114,13 @@ class TweetApiTests(TestCase):
 
         response = self.anonymous_client.get(TWEET_LIST_URL, {'user_id': self.user2.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['tweets']), 2)
+        self.assertEqual(len(response.data['results']), 2)
         # <Wayne Shih> 06-Sep-2021
         # test order by '-created_at'
-        self.assertEqual(response.data['tweets'][0]['id'], self.tweets2[1].id)
-        self.assertEqual(response.data['tweets'][1]['id'], self.tweets2[0].id)
+        self.assertEqual(response.data['results'][0]['id'], self.tweets2[1].id)
+        self.assertEqual(response.data['results'][1]['id'], self.tweets2[0].id)
         self.assertEqual(
-            response.data['tweets'][0]['created_at'] > response.data['tweets'][1]['created_at'],
+            response.data['results'][0]['created_at'] > response.data['results'][1]['created_at'],
             True
         )
 
@@ -400,9 +401,9 @@ class TweetApiTests(TestCase):
         response = self.anonymous_client.get(TWEET_LIST_URL, {'user_id': kb24.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['has_next'], True)
-        self.assertEqual(len(response.data['tweets']), page_size)
-        self.assertEqual(response.data['tweets'][0]['id'], tweets[0].id)
-        self.assertEqual(response.data['tweets'][page_size - 1]['id'], tweets[page_size - 1].id)
+        self.assertEqual(len(response.data['results']), page_size)
+        self.assertEqual(response.data['results'][0]['id'], tweets[0].id)
+        self.assertEqual(response.data['results'][page_size - 1]['id'], tweets[page_size - 1].id)
         self.assertEqual(
             str(tweets[page_size - 1].created_at.date()) in parse.unquote(response.data['next']),
             True
@@ -429,9 +430,12 @@ class TweetApiTests(TestCase):
             in parse.unquote(response.data['next']),
             True
         )
-        self.assertEqual(len(response.data['tweets']), page_size)
-        self.assertEqual(response.data['tweets'][0]['id'], tweets[page_size].id)
-        self.assertEqual(response.data['tweets'][page_size - 1]['id'], tweets[page_size * 2 - 1].id)
+        self.assertEqual(len(response.data['results']), page_size)
+        self.assertEqual(response.data['results'][0]['id'], tweets[page_size].id)
+        self.assertEqual(
+            response.data['results'][page_size - 1]['id'],
+            tweets[page_size * 2 - 1].id
+        )
 
         # Test the last page of kb24's tweets  <Wayne Shih> 25-Apr-2022
         response = self.anonymous_client.get(TWEET_LIST_URL, {
@@ -441,9 +445,12 @@ class TweetApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['has_next'], False)
         self.assertEqual(response.data['next'], None)
-        self.assertEqual(len(response.data['tweets']), page_size)
-        self.assertEqual(response.data['tweets'][0]['id'], tweets[page_size * 2].id)
-        self.assertEqual(response.data['tweets'][page_size - 1]['id'], tweets[page_size * 3 - 1].id)
+        self.assertEqual(len(response.data['results']), page_size)
+        self.assertEqual(response.data['results'][0]['id'], tweets[page_size * 2].id)
+        self.assertEqual(
+            response.data['results'][page_size - 1]['id'],
+            tweets[page_size * 3 - 1].id
+        )
 
         # Test user1's new tweets  <Wayne Shih> 25-Apr-2022
         response = self.anonymous_client.get(TWEET_LIST_URL, {
@@ -452,7 +459,7 @@ class TweetApiTests(TestCase):
         })
         self.assertEqual(response.data['has_next'], False)
         self.assertEqual(response.data['next'], None)
-        self.assertEqual(len(response.data['tweets']), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
         new_tweet1 = self.create_tweet(kb24, 'kb24::new_tweet::1')
         new_tweet2 = self.create_tweet(kb24, 'kb24::new_tweet::2')
@@ -462,6 +469,6 @@ class TweetApiTests(TestCase):
         })
         self.assertEqual(response.data['has_next'], False)
         self.assertEqual(response.data['next'], None)
-        self.assertEqual(len(response.data['tweets']), 2)
-        self.assertEqual(response.data['tweets'][0]['id'], new_tweet2.id)
-        self.assertEqual(response.data['tweets'][1]['id'], new_tweet1.id)
+        self.assertEqual(len(response.data['results']), 2)
+        self.assertEqual(response.data['results'][0]['id'], new_tweet2.id)
+        self.assertEqual(response.data['results'][1]['id'], new_tweet1.id)
