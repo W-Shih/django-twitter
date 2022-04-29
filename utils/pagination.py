@@ -10,6 +10,7 @@
 #    Date      Name                    Description of Change
 # 26-Apr-2021  Wayne Shih              Initial create
 # 27-Apr-2021  Wayne Shih              Refactor being under util and rename to EndlessPagination
+# 28-Apr-2021  Wayne Shih              Add generic key to render endless pagination results
 # $HISTORY$
 # =================================================================================================
 
@@ -78,6 +79,7 @@ class EndlessPagination(BasePagination):
         return Response({
             'has_next': self.has_next,
             'next': self._get_next_link(data),
+            'results': data,
             f'{str(deprecated_key)}': data,
         })
 
