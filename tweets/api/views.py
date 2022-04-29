@@ -19,9 +19,12 @@
 # 12-Mar-2022  Wayne Shih              React to serializer changes
 # 26-Apr-2022  Wayne Shih              Add endless pagination for list api
 # 27-Apr-2022  Wayne Shih              React to renaming to EndlessPagination
+# 29-Apr-2022  Wayne Shih              Fix query string bug for list api
 # $HISTORY$
 # =================================================================================================
 
+
+import django_filters
 
 from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -39,6 +42,17 @@ from utils.pagination import EndlessPagination
 from utils.decorators import required_params
 
 
+class TweetFilter(django_filters.rest_framework.FilterSet):
+    # https://www.django-rest-framework.org/api-guide/filtering/#overriding-the-initial-queryset
+    # https://django-filter.readthedocs.io/en/latest/guide/rest_framework.html#adding-a-filterset-with-filterset-class
+    # https://q1mi.github.io/Django-REST-framework-documentation/api-guide/filtering_zh/#specifying-a-filtersetfilterset
+    user_id = django_filters.NumberFilter(field_name='user_id')
+
+    class Meta:
+        model = Tweet
+        fields = ('user_id',)
+
+
 class TweetViewSet(viewsets.GenericViewSet):
     # <Wayne Shih> 06-Sep-2021
     # rest_framework will use serializer_class to be the POST format at the rest page
@@ -48,6 +62,7 @@ class TweetViewSet(viewsets.GenericViewSet):
     # TODO:
     #   prefetch_related for comments
     queryset = Tweet.objects.all().prefetch_related('user')
+    filterset_class = TweetFilter
     pagination_class = EndlessPagination
 
     # <Wayne Shih> 26-Apr-2022
@@ -83,13 +98,7 @@ class TweetViewSet(viewsets.GenericViewSet):
     # - https://www.django-rest-framework.org/api-guide/viewsets/#example
     @required_params(params=['user_id'])
     def list(self, request: Request):
-        # <Wayne Shih> 06-Sep-2021
-        # Does it need to check if user_id exist? -- Keep silence for now
-        user_id = request.query_params['user_id']
-        # <Wayne Shih> 23-Feb-2022
-        # TODO:
-        #   Here could be enhanced by django-filters
-        tweets = Tweet.objects.filter(user_id=user_id).prefetch_related('user')
+        tweets = self.filter_queryset(self.get_queryset()).prefetch_related('user')
         # print('--- sql --- \n{}'.format(tweets.query))
         page = self.paginate_queryset(tweets)
         serializer = TweetSerializer(page, many=True, context={'request': request})

@@ -18,6 +18,7 @@
 # 30-Mar-2022  Wayne Shih              React to adding tweet photo and add tests for tweet photo
 # 26-Apr-2022  Wayne Shih              Add tests for tweet list endless pagination
 # 27-Apr-2022  Wayne Shih              React to renaming to EndlessPagination
+# 29-Apr-2022  Wayne Shih              Add a test with invalid user_id for list api
 # $HISTORY$
 # =================================================================================================
 
@@ -67,6 +68,14 @@ class TweetApiTests(TestCase):
         errors_str = 'Request is missing param(s): user_id. ' \
                      'All missing params are required to provide.'
         self.assertEqual(response.data['errors'], errors_str)
+
+        # Test invalid user_id  <Wayne Shih> 29-Apr-2022
+        invalid_user_id = 'invalid_user_id'
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': invalid_user_id
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['user_id'][0], 'Enter a number.')
 
         # Non-existing user id
         non_existing_user_id = -1
