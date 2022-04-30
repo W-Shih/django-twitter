@@ -11,6 +11,7 @@
 # 12-Mar-2022  Wayne Shih              Add tests for likes in tweets and comments
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
+# 29-Apr-2022  Wayne Shih              React to deprecating key in newsfeeds list api
 # $HISTORY$
 # =================================================================================================
 
@@ -357,8 +358,8 @@ class LikeApiTests(TestCase):
         self.create_newsfeed(self.kd35, self.lbj23_tweet)
         response = self.kd35_client.get(NEWSFEED_LIST_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['newsfeeds'][0]['tweet']['likes_count'], 2)
-        self.assertEqual(response.data['newsfeeds'][0]['tweet']['has_liked'], True)
+        self.assertEqual(response.data['results'][0]['tweet']['likes_count'], 2)
+        self.assertEqual(response.data['results'][0]['tweet']['has_liked'], True)
 
         # test likes and their detail in tweet detail
         url = TWEET_DETAIL_URL.format(self.lbj23_tweet.id)
