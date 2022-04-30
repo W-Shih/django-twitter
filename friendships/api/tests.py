@@ -15,6 +15,7 @@
 # 02-Apr-2022  Wayne Shih              Add tests for friendships pagination
 # 03-Apr-2022  Wayne Shih              Add tests for followers & followings pagination, react to adding has_followed
 # 03-Apr-2022  Wayne Shih              React to deprecating keys in friendships apis
+# 30-Apr-2022  Wayne Shih              React to adding cache
 # $HISTORY$
 # =================================================================================================
 
@@ -39,6 +40,7 @@ UNFOLLOW_URL = '/api/friendships/{}/unfollow/'
 class FriendshipApiTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
         self.lbj23 = self.create_user(username='lbj23')
         self.lbj23_client = APIClient()
         self.lbj23_client.force_authenticate(self.lbj23)

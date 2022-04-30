@@ -20,6 +20,7 @@
 # 24-Feb-2022  Wayne Shih              Add likes
 # 12-Mar-2022  Wayne Shih              Add notifications and inbox
 # 23-Mar-2022  Wayne Shih              Add MEDIA_ROOT, DEFAULT_FILE_STORAGE, AWS-related variables
+# 30-Apr-2022  Wayne Shih              Add CACHES
 # $HISTORY$
 # =================================================================================================
 
@@ -203,6 +204,22 @@ AWS_S3_REGION_NAME = 'us-west-1'
 # The other option is to set them as environment variables instead.
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+# <Wayne Shih> 29-Apr-2022
+# https://docs.djangoproject.com/en/3.1/topics/cache/#setting-up-the-cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 86400,
+    },
+    'testing': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 86400,
+        'KEY_PREFIX': 'testing:',
+    },
+}
 
 try:
     from .local_settings import *
