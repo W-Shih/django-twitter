@@ -13,12 +13,16 @@
 # 07-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 05-Nov-2021  Wayne Shih              Fix pylint checks
+# 30-Apr-2022  Wayne Shih              Add Django signal-listener
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save, pre_delete
+
+from friendships.listeners import invalidate_followings_cache
 
 
 class Friendship(models.Model):
@@ -81,3 +85,10 @@ class Friendship(models.Model):
             to_user_id=self.to_user_id,
             created_at=self.created_at,
         )
+
+
+# <Wayne Shih> 29-Apr-2022
+# https://docs.djangoproject.com/en/3.1/ref/signals/#post-save
+# https://docs.djangoproject.com/en/3.1/topics/signals/#listening-to-signals
+post_save.connect(invalidate_followings_cache, sender=Friendship)
+pre_delete.connect(invalidate_followings_cache, sender=Friendship)

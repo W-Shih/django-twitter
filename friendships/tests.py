@@ -9,19 +9,22 @@
 # 07-Sep-2021  Wayne Shih              Initial create
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 17-Oct-2021  Wayne Shih              Fix pylint checks
+# 30-Apr-2022  Wayne Shih              Add a test for FriendshipService
 # $HISTORY$
 # =================================================================================================
 
 
 import re
 
-from testing.testcases import TestCase
 from friendships.models import Friendship
+from friendships.services import FriendshipService
+from testing.testcases import TestCase
 
 
 class FriendshipTest(TestCase):
 
     def setUp(self):
+        self.clear_cache()
         self.user_1 = self.create_user(username='cavs_lbj23')
         self.user_2 = self.create_user(username='lakers_lbj23')
         self.user_3 = self.create_user(username='bulls_mj23')
@@ -106,3 +109,40 @@ class FriendshipTest(TestCase):
                   f'{self.friendship_1_3.to_user}-{self.friendship_1_3.to_user_id} ' + \
                   f'at {self.friendship_1_3.created_at} --'
         self.assertEqual(message, str(self.friendship_1_3))
+
+
+class FriendshipServiceTest(TestCase):
+
+    def setUp(self):
+        self.clear_cache()
+        self.kd35 = self.create_user(username='nets_kd35')
+        self.mj23 = self.create_user(username='bulls_mj23')
+
+    def test_get_followings(self):
+        kd35_following_id_set = set()
+        for i in range(3):
+            user = self.create_user(username=f'kd35_following:{i}')
+            kd35_following_id_set.add(user.id)
+            Friendship.objects.create(from_user=self.kd35, to_user=user)
+        Friendship.objects.create(from_user=self.kd35, to_user=self.mj23)
+        kd35_following_id_set.add(self.mj23.id)
+
+        # Get followings from DB and set to cache first time  <Wayne Shih> 30-Apr-2022
+        following_user_id_set = FriendshipService.get_following_user_id_set(self.kd35.id)
+        self.assertSetEqual(following_user_id_set, kd35_following_id_set)
+
+        # Get followings from cache second time  <Wayne Shih> 30-Apr-2022
+        following_user_id_set = FriendshipService.get_following_user_id_set(self.kd35.id)
+        self.assertSetEqual(following_user_id_set, kd35_following_id_set)
+
+        # <Wayne Shih> 30-Apr-2022
+        # delete() triggers to invalidate cache,
+        # so get followings from DB and set to cache first time
+        Friendship.objects.filter(from_user=self.kd35, to_user=self.mj23).delete()
+        kd35_following_id_set.discard(self.mj23.id)
+        following_user_id_set = FriendshipService.get_following_user_id_set(self.kd35.id)
+        self.assertSetEqual(following_user_id_set, kd35_following_id_set)
+
+        # Get followings from cache second time  <Wayne Shih> 30-Apr-2022
+        following_user_id_set = FriendshipService.get_following_user_id_set(self.kd35.id)
+        self.assertSetEqual(following_user_id_set, kd35_following_id_set)
