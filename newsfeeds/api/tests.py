@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 04-Nov-2021  Wayne Shih              Initial create
 # 27-Apr-2022  Wayne Shih              Add tests for newfeed list endless pagination
+# 29-Apr-2022  Wayne Shih              React to deprecating key in newsfeeds list api
 # $HISTORY$
 # =================================================================================================
 
@@ -49,19 +50,19 @@ class NewsFeedApiTests(TestCase):
         # test authenticated user with GET
         response = self.lbj23_client.get(NEWSFEED_LIST_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['newsfeeds']), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
         # test seeing user's own tweet
         self.lbj23_client.post(TWEET_CREATE_URL, {'content': 'I am the King James!'})
         response = self.lbj23_client.get(NEWSFEED_LIST_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['newsfeeds']), 1)
+        self.assertEqual(len(response.data['results']), 1)
 
         # able to see someone's tweet after following
         self.lbj23_client.post(FOLLOW_URL.format(self.kobe24.id))
         self.kobe24_client.post(TWEET_CREATE_URL, {'content': 'Be Better!'})
         response = self.lbj23_client.get(NEWSFEED_LIST_URL)
-        newsfeeds = response.data['newsfeeds']
+        newsfeeds = response.data['results']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(newsfeeds), 2)
         self.assertEqual(newsfeeds[0]['created_at'] > newsfeeds[1]['created_at'], True)
@@ -81,10 +82,10 @@ class NewsFeedApiTests(TestCase):
         response = self.lbj23_client.get(NEWSFEED_LIST_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['has_next'], True)
-        self.assertEqual(len(response.data['newsfeeds']), page_size)
-        self.assertEqual(response.data['newsfeeds'][0]['id'], newsfeeds[0].id)
+        self.assertEqual(response.data['results'][0]['id'], newsfeeds[0].id)
+        self.assertEqual(len(response.data['results']), page_size)
         self.assertEqual(
-            response.data['newsfeeds'][page_size - 1]['id'],
+            response.data['results'][page_size - 1]['id'],
             newsfeeds[page_size - 1].id
         )
         self.assertEqual(
@@ -103,10 +104,10 @@ class NewsFeedApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['has_next'], False)
         self.assertEqual(response.data['next'], None)
-        self.assertEqual(len(response.data['newsfeeds']), page_size - 1)
-        self.assertEqual(response.data['newsfeeds'][0]['id'], newsfeeds[page_size].id)
+        self.assertEqual(len(response.data['results']), page_size - 1)
+        self.assertEqual(response.data['results'][0]['id'], newsfeeds[page_size].id)
         self.assertEqual(
-            response.data['newsfeeds'][page_size - 2]['id'],
+            response.data['results'][page_size - 2]['id'],
             newsfeeds[page_size * 2 - 2].id
         )
 
@@ -116,7 +117,7 @@ class NewsFeedApiTests(TestCase):
         })
         self.assertEqual(response.data['has_next'], False)
         self.assertEqual(response.data['next'], None)
-        self.assertEqual(len(response.data['newsfeeds']), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
         new_tweet1 = self.create_tweet(self.lbj23, 'lbj23::new_tweet::1')
         new_tweet2 = self.create_tweet(self.lbj23, 'lbj23::new_tweet::2')
@@ -127,6 +128,6 @@ class NewsFeedApiTests(TestCase):
         })
         self.assertEqual(response.data['has_next'], False)
         self.assertEqual(response.data['next'], None)
-        self.assertEqual(len(response.data['newsfeeds']), 2)
-        self.assertEqual(response.data['newsfeeds'][0]['id'], new_newsfeed2.id)
-        self.assertEqual(response.data['newsfeeds'][1]['id'], new_newsfeed1.id)
+        self.assertEqual(len(response.data['results']), 2)
+        self.assertEqual(response.data['results'][0]['id'], new_newsfeed2.id)
+        self.assertEqual(response.data['results'][1]['id'], new_newsfeed1.id)

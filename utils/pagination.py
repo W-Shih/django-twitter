@@ -11,6 +11,7 @@
 # 26-Apr-2021  Wayne Shih              Initial create
 # 27-Apr-2021  Wayne Shih              Refactor being under util and rename to EndlessPagination
 # 28-Apr-2021  Wayne Shih              Add generic key to render endless pagination results
+# 29-Apr-2022  Wayne Shih              React to deprecating keys in tweets and newsfeeds list api
 # $HISTORY$
 # =================================================================================================
 
@@ -70,17 +71,6 @@ class EndlessPagination(BasePagination):
             'has_next': self.has_next,
             'next': self._get_next_link(data),
             'results': data,
-        })
-
-    # <Wayne Shih> 25-Apr-2022
-    # TODO:
-    #   Remove this method after front-end & app-end deprecate keys 'tweets'.
-    def get_customized_paginated_response(self, data, deprecated_key):
-        return Response({
-            'has_next': self.has_next,
-            'next': self._get_next_link(data),
-            'results': data,
-            f'{str(deprecated_key)}': data,
         })
 
     def to_html(self):
