@@ -11,6 +11,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 17-Oct-2021  Wayne Shih              Initial create
+# 27-May-2022  Wayne Shih              Add cached_tweet
 # $HISTORY$
 # =================================================================================================
 
@@ -19,6 +20,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from tweets.models import Tweet
+from utils.memcached_helpers import MemcachedHelper
 
 
 class NewsFeed(models.Model):
@@ -33,3 +35,7 @@ class NewsFeed(models.Model):
 
     def __str__(self):
         return f'-- {self.created_at} inbox of {self.user}: {self.tweet} --'
+
+    @property
+    def cached_tweet(self):
+        return MemcachedHelper.get_object_through_cache(Tweet, self.tweet_id)
