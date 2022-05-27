@@ -18,6 +18,7 @@
 # 26-Feb-2022  Wayne Shih              Add comments for ContentType
 # 25-Mar-2022  Wayne Shih              Add TweetPhoto model
 # 30-Mar-2022  Wayne Shih              Update TweetPhoto model's index
+# 26-May-2022  Wayne Shih              Fetch user from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -26,6 +27,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from accounts.services import UserService
 from likes.models import Like
 from tweets.constants import TWEET_PHOTO_STATUS_CHOICES, TweetPhotoStatus
 from utils.time_helpers import utc_now
@@ -67,6 +69,10 @@ class Tweet(models.Model):
             content_type=content_type,
             object_id=self.id,
         ).order_by('-created_at')
+    
+    @property
+    def cached_user(self):
+        return UserService.get_user_through_cache(self.user_id)
 
 
 class TweetPhoto(models.Model):

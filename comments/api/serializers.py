@@ -18,6 +18,7 @@
 # 27-Feb-2022  Wayne Shih              Enhance CommentSerializerForCreate() and add DefaultCommentSerializer
 # 12-Mar-2022  Wayne Shih              Insert likes_count and has_liked to comment serializer
 # 17-Mar-2022  Wayne Shih              Add CommentSerializerForNotifications
+# 26-May-2022  Wayne Shih              Fetch user from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -35,7 +36,7 @@ class DefaultCommentSerializer(serializers.Serializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = UserSerializerForComment()
+    user = UserSerializerForComment(source='cached_user')
     likes_count = serializers.SerializerMethodField()
     has_liked = serializers.SerializerMethodField()
 

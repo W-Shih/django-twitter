@@ -14,6 +14,7 @@
 # 10-Oct-2021  Wayne Shih              React to pylint checks
 # 05-Nov-2021  Wayne Shih              Fix pylint checks
 # 30-Apr-2022  Wayne Shih              Add Django signal-listener
+# 26-May-2022  Wayne Shih              Fetch user from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -22,6 +23,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
 
+from accounts.services import UserService
 from friendships.listeners import invalidate_followings_cache
 
 
@@ -85,6 +87,14 @@ class Friendship(models.Model):
             to_user_id=self.to_user_id,
             created_at=self.created_at,
         )
+
+    @property
+    def cached_from_user(self):
+        return UserService.get_user_through_cache(self.from_user_id)
+
+    @property
+    def cached_to_user(self):
+        return UserService.get_user_through_cache(self.to_user_id)
 
 
 # <Wayne Shih> 29-Apr-2022

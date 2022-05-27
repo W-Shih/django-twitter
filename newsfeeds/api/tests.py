@@ -9,6 +9,7 @@
 # 04-Nov-2021  Wayne Shih              Initial create
 # 27-Apr-2022  Wayne Shih              Add tests for newfeed list endless pagination
 # 29-Apr-2022  Wayne Shih              React to deprecating key in newsfeeds list api
+# 26-May-2022  Wayne Shih              Add a test to test cached user
 # $HISTORY$
 # =================================================================================================
 
@@ -30,6 +31,8 @@ TWEET_CREATE_URL = '/api/tweets/'
 class NewsFeedApiTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
+
         self.lbj23 = self.create_user('lbj23')
         self.lbj23_client = APIClient()
         self.lbj23_client.force_authenticate(self.lbj23)
@@ -131,3 +134,41 @@ class NewsFeedApiTests(TestCase):
         self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(response.data['results'][0]['id'], new_newsfeed2.id)
         self.assertEqual(response.data['results'][1]['id'], new_newsfeed1.id)
+
+    def test_cached_user(self):
+        profile = self.kobe24.profile
+        profile.nickname = 'lakers_24'
+        profile.save()
+        self.create_newsfeed(self.lbj23, self.create_tweet(self.kobe24, 'tweet1'))
+        self.create_newsfeed(self.lbj23, self.create_tweet(self.kobe24, 'tweet2'))
+
+        # <Wayne Shih> see user kobe24 and his profile
+        response = self.lbj23_client.get(NEWSFEED_LIST_URL)
+        newsfeeds = response.data['results']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(newsfeeds[0]['tweet']['user']['username'], 'kobe24')  # user cache miss
+        self.assertEqual(newsfeeds[0]['tweet']['user']['nickname'], 'lakers_24')  # profile cache miss
+        self.assertEqual(newsfeeds[1]['tweet']['user']['username'], 'kobe24')  # cache hit
+        self.assertEqual(newsfeeds[1]['tweet']['user']['nickname'], 'lakers_24')  # profile cache hit
+
+        # <Wayne Shih> see kobe24's new username
+        self.kobe24.username = 'kobe0824'
+        self.kobe24.save()
+        response = self.lbj23_client.get(NEWSFEED_LIST_URL)
+        newsfeeds = response.data['results']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(newsfeeds[0]['tweet']['user']['username'], 'kobe0824')  # user cache miss
+        self.assertEqual(newsfeeds[0]['tweet']['user']['nickname'], 'lakers_24')  # profile cache hit
+        self.assertEqual(newsfeeds[1]['tweet']['user']['username'], 'kobe0824')  # user cache hit
+        self.assertEqual(newsfeeds[1]['tweet']['user']['nickname'], 'lakers_24')  # profile cache hit
+
+        # <Wayne Shih> see kobe24's new nickname
+        profile.nickname = 'lakers_kb0824'
+        profile.save()
+        response = self.lbj23_client.get(NEWSFEED_LIST_URL)
+        newsfeeds = response.data['results']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(newsfeeds[0]['tweet']['user']['username'], 'kobe0824')  # user cache hit
+        self.assertEqual(newsfeeds[0]['tweet']['user']['nickname'], 'lakers_kb0824')  # profile cache miss
+        self.assertEqual(newsfeeds[1]['tweet']['user']['username'], 'kobe0824')  # user cache hit
+        self.assertEqual(newsfeeds[1]['tweet']['user']['nickname'], 'lakers_kb0824')  # profile cache hit

@@ -20,6 +20,7 @@
 # 12-Mar-2022  Wayne Shih              Insert likes to tweet serializers
 # 17-Mar-2022  Wayne Shih              Add TweetSerializerForNotifications
 # 30-Mar-2022  Wayne Shih              Add tweet photo to serializers
+# 26-May-2022  Wayne Shih              Fetch user from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -36,7 +37,7 @@ from tweets.services import TweetService
 
 
 class TweetSerializer(serializers.ModelSerializer):
-    user = UserSerializerForTweet()
+    user = UserSerializerForTweet(source='cached_user')
     comments_count = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     has_liked = serializers.SerializerMethodField()
