@@ -10,6 +10,7 @@
 # 17-Mar-2022  Wayne Shih              Add notifications api tests
 # 19-Mar-2022  Wayne Shih              Add tests for notifications update api
 # 19-Mar-2022  Wayne Shih              React to notifications list api change by ListModelMixin
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -31,6 +32,8 @@ NOTIFICATION_DETAIL_URL = '/api/notifications/{}/'
 class NotificationTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
+
         self.lbj23, self.lbj23_client = self.create_user_and_auth_client(username='lbj23')
         self.kd35, self.kd35_client = self.create_user_and_auth_client(username='kd35')
         self.lbj23_tweet = self.create_tweet(self.lbj23, 'This is for u!!')

@@ -18,6 +18,7 @@
 # 12-Mar-2022  Wayne Shih              Update comments
 # 12-Mar-2022  Wayne Shih              Update create to get_or_create
 # 17-Mar-2022  Wayne Shih              Update history and comments
+# 26-May-2022  Wayne Shih              Fetch user from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -32,7 +33,8 @@ from tweets.models import Tweet
 
 
 class LikeSerializer(serializers.ModelSerializer):
-    user = UserSerializerForLike()
+    user = UserSerializerForLike(source='cached_user')
+    # user = UserSerializerForLike()
 
     class Meta:
         model = Like

@@ -18,6 +18,7 @@
 # 27-Feb-2022  Wayne Shih              Add DefaultFriendshipSerializer
 # 03-Apr-2022  Wayne Shih              Add has_followed to Follower and Following Serializers
 # 30-Apr-2022  Wayne Shih              Resolve N + 1 query problem by cache
+# 26-May-2022  Wayne Shih              Fetch user from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -48,7 +49,7 @@ class DefaultFriendshipSerializer(serializers.Serializer):
 
 
 class FollowerSerializer(serializers.ModelSerializer, FollowingUserIdSetMixin):
-    from_user = UserSerializerForFriendship()
+    from_user = UserSerializerForFriendship(source='cached_from_user')
     # user = UserSerializerForFriendship(source='from_user')
     has_followed = serializers.SerializerMethodField()
 
@@ -65,7 +66,7 @@ class FollowerSerializer(serializers.ModelSerializer, FollowingUserIdSetMixin):
 
 class FollowingSerializer(serializers.ModelSerializer, FollowingUserIdSetMixin):
     # to_user = UserSerializerForFriendship()
-    user = UserSerializerForFriendship(source='to_user')
+    user = UserSerializerForFriendship(source='cached_to_user')
     has_followed = serializers.SerializerMethodField()
 
     class Meta:

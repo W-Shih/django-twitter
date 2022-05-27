@@ -6,6 +6,7 @@
 #    Date      Name                    Description of Change
 # 17-Oct-2021  Wayne Shih              Initial create
 # 05-Nov-2021  Wayne Shih              Fix typo
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -19,6 +20,8 @@ from newsfeeds.models import NewsFeed
 class NewsfeedTest(TestCase):
 
     def setUp(self):
+        self.clear_cache()
+
         self.user = self.create_user(username='cavs_lbj23')
         self.tweet = self.create_tweet(user=self.user, content='This is for u!')
         self.newsfeed = NewsFeed.objects.create(

@@ -9,6 +9,7 @@
 # 18-Oct-2021  Wayne Shih              Initial create
 # 03-Apr-2022  Wayne Shih              Add get_has_followed()
 # 30-Apr-2022  Wayne Shih              Add get_following_user_id_set() & invalidate_followings_cache()
+# 26-May-2022  Wayne Shih              Add print to debug github travis CI
 # $HISTORY$
 # =================================================================================================
 
@@ -83,6 +84,9 @@ class FriendshipService(object):
         key = FOLLOWINGS_PATTERN.format(user_id=from_user_id)
         following_user_id_set = cache.get(key)
         if following_user_id_set is not None:
+            # <Wayne Shih> 25-May-2022
+            # Add this print to see why it did not get hit on github travis CI
+            print('\n*** wshih: following_user_id_set from cache ***')
             return following_user_id_set
 
         friendships = Friendship.objects.filter(from_user_id=from_user_id)

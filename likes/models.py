@@ -11,6 +11,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 23-Feb-2021  Wayne Shih              Initial create
+# 26-May-2022  Wayne Shih              Fetch user from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -19,6 +20,8 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+
+from accounts.services import UserService
 
 
 class Like(models.Model):
@@ -50,3 +53,7 @@ class Like(models.Model):
             content_type=self.content_type,
             object_id=self.object_id,
         )
+
+    @property
+    def cached_user(self):
+        return UserService.get_user_through_cache(self.user_id)

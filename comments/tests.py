@@ -10,6 +10,7 @@
 # 27-Nov-2021  Wayne Shih              React to  Comment ordering update
 # 24-Feb-2022  Wayne Shih              Add tests for likes model
 # 20-Mar-2022  Wayne Shih              Change class name to CommentTests
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -23,6 +24,8 @@ from testing.testcases import TestCase
 class CommentTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
+
         self.lbj23 = self.create_user(username='cavs_lbj23')
         self.tweet = self.create_tweet(user=self.lbj23, content='This is for u!')
         self.kobe24 = self.create_user(username='kobe24')

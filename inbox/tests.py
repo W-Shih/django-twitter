@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 12-Mar-2021  Wayne Shih              Initial create
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -20,6 +21,8 @@ from testing.testcases import TestCase
 class NotificationServiceTest(TestCase):
 
     def setUp(self):
+        self.clear_cache()
+
         self.lbj23 = self.create_user(username='cavs_lbj23')
         self.kobe24 = self.create_user(username='kobe24')
         self.lbj23_tweet = self.create_tweet(user=self.lbj23, content='This is for u!')

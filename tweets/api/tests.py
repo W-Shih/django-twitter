@@ -20,6 +20,7 @@
 # 27-Apr-2022  Wayne Shih              React to renaming to EndlessPagination
 # 29-Apr-2022  Wayne Shih              Add a test with invalid user_id for list api
 # 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -45,6 +46,8 @@ class TweetApiTests(TestCase):
     # <Wayne Shih> 06-Sep-2021
     # This method will be executed before executing each test method
     def setUp(self):
+        self.clear_cache()
+
         self.user1 = self.create_user(username='lbj23')
         self.tweets1 = [
             self.create_tweet(self.user1)

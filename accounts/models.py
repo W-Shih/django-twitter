@@ -12,12 +12,16 @@
 #    Date      Name                    Description of Change
 # 19-Mar-2022  Wayne Shih              Initial create
 # 23-Mar-2022  Wayne Shih              Update UserProfile's __str__
+# 26-May-2022  Wayne Shih              Add Django signal-listener
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save, pre_delete
+
+from accounts.listeners import invalidate_user_cache, invalidate_profile_cache
 
 
 class UserProfile(models.Model):
@@ -44,6 +48,8 @@ class UserProfile(models.Model):
 
 
 def get_profile(user: User):
+    from accounts.services import UserService
+
     if hasattr(user, '_cached_user_profile'):
         return getattr(user, '_cached_user_profile')
 
@@ -51,7 +57,7 @@ def get_profile(user: User):
     # Consider UserProfile is a new added model, so previous users might not have their
     # user profiles created. In this case, here performs lazy creation of user profile
     # for these users.
-    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile = UserService.get_profile_through_cache(user.id)
     setattr(user, '_cached_user_profile', profile)
     return profile
 
@@ -60,3 +66,13 @@ def get_profile(user: User):
 # Python will execute this line when it starts so that we are able to add our own attributes
 # or methods to an object from their party package.
 User.profile = property(get_profile)
+
+
+# <Wayne Shih> 29-Apr-2022
+# https://docs.djangoproject.com/en/3.1/ref/signals/#post-save
+# https://docs.djangoproject.com/en/3.1/topics/signals/#listening-to-signals
+post_save.connect(invalidate_user_cache, sender=User)
+pre_delete.connect(invalidate_user_cache, sender=User)
+
+post_save.connect(invalidate_profile_cache, sender=UserProfile)
+pre_delete.connect(invalidate_profile_cache, sender=UserProfile)
