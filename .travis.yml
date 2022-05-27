@@ -11,6 +11,7 @@
 # 05-Nov-2021  Wayne Shih              Turn off curl's verification of the certificate by -k option
 # 06-Nov-2021  Wayne Shih              Add pylint
 # 25-Nov-2021  Wayne Shih              React to requirements.txt update
+# 26-May-2022  Wayne Shih              Add memcached
 # $HISTORY$
 # =================================================================================================
 
@@ -21,8 +22,10 @@ sudo: enabled
 python:
   - "3.6"
 
+# https://docs.travis-ci.com/user/database-setup/#memcached
 services:
   - mysql
+  - memcached
 
 # commands to install dependencies
 install:
