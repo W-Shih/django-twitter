@@ -17,6 +17,7 @@
 # 23-Mar-2022  Wayne Shih              React to user-related serializer changes
 # 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
 # 29-Apr-2022  Wayne Shih              React to deprecating key in newsfeeds list api
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -40,6 +41,8 @@ NEWSFEED_LIST_URL = '/api/newsfeeds/'
 class CommentApiTests(TestCase):
 
     def setUp(self):
+        self.clear_cache()
+
         self.lbj23 = self.create_user(username='lbj23')
         self.lbj23_client = APIClient()
         self.tweet = self.create_tweet(self.lbj23, 'This is for u!!')

@@ -12,6 +12,7 @@
 # 27-Feb-2022  Wayne Shih              Add a test for DRF API list page and tests for login
 # 20-Mar-2022  Wayne Shih              Add a test for UserProfile model
 # 23-Mar-2022  Wayne Shih              Add tests for UserProfile & User APIs, react to serializer change
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -55,6 +56,7 @@ class AccountApiTests(TestCase):
     # <Wayne Shih> 12-Aug-2021
     # This method will be executed before executing each test method
     def setUp(self):
+        self.clear_cache()
         self.client = APIClient()
         self.user = self.create_user(
             username='fake_user',

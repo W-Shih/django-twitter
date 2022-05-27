@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 19-Mar-2022  Wayne Shih              Initial create
 # 23-Mar-2022  Wayne Shih              React to UserProfile's updates
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -17,6 +18,9 @@ from testing.testcases import TestCase
 
 
 class UserProfileTests(TestCase):
+
+    def setUp(self):
+        self.clear_cache()
 
     def test_user_profile_model_attributes(self):
         self.assertEqual(hasattr(UserProfile, 'id'), True)

@@ -12,6 +12,7 @@
 # 24-Feb-2022  Wayne Shih              Add tests for likes model
 # 25-Mar-2022  Wayne Shih              Add tests for TweetPhotos model
 # 30-Mar-2022  Wayne Shih              Add more tests for TweetPhotos model
+# 26-May-2022  Wayne Shih              Add clear cache before each test
 # $HISTORY$
 # =================================================================================================
 
@@ -28,6 +29,8 @@ from utils.time_helpers import utc_now
 class TweetTest(TestCase):
 
     def setUp(self):
+        self.clear_cache()
+
         self.lbj23 = self.create_user(username='cavs_lbj23')
         self.kb24 = self.create_user(username='kobe24')
         self.sc30 = self.create_user(username='curry', password='sc30')
