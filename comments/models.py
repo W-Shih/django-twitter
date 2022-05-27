@@ -15,6 +15,7 @@
 # 24-Feb-2022  Wayne Shih              Add like_set as relationships “backward”
 # 26-Feb-2022  Wayne Shih              Add comments for ContentType
 # 26-May-2022  Wayne Shih              Add cached_user
+# 27-May-2022  Wayne Shih              React to memcached helper
 # $HISTORY$
 # =================================================================================================
 
@@ -23,9 +24,9 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from accounts.services import UserService
 from likes.models import Like
 from tweets.models import Tweet
+from utils.memcached_helpers import MemcachedHelper
 
 
 class Comment(models.Model):
@@ -74,4 +75,4 @@ class Comment(models.Model):
 
     @property
     def cached_user(self):
-        return UserService.get_user_through_cache(self.user_id)
+        return MemcachedHelper.get_object_through_cache(User, self.user_id)

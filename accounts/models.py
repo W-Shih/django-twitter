@@ -13,6 +13,7 @@
 # 19-Mar-2022  Wayne Shih              Initial create
 # 23-Mar-2022  Wayne Shih              Update UserProfile's __str__
 # 26-May-2022  Wayne Shih              Add Django signal-listener
+# 27-May-2022  Wayne Shih              React to memcached helper
 # $HISTORY$
 # =================================================================================================
 
@@ -21,7 +22,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
 
-from accounts.listeners import invalidate_user_cache, invalidate_profile_cache
+from accounts.listeners import invalidate_profile_cache
+from utils.listeners import invalidate_object_cache
 
 
 class UserProfile(models.Model):
@@ -71,8 +73,8 @@ User.profile = property(get_profile)
 # <Wayne Shih> 29-Apr-2022
 # https://docs.djangoproject.com/en/3.1/ref/signals/#post-save
 # https://docs.djangoproject.com/en/3.1/topics/signals/#listening-to-signals
-post_save.connect(invalidate_user_cache, sender=User)
-pre_delete.connect(invalidate_user_cache, sender=User)
+post_save.connect(invalidate_object_cache, sender=User)
+pre_delete.connect(invalidate_object_cache, sender=User)
 
 post_save.connect(invalidate_profile_cache, sender=UserProfile)
 pre_delete.connect(invalidate_profile_cache, sender=UserProfile)
