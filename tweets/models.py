@@ -19,7 +19,7 @@
 # 25-Mar-2022  Wayne Shih              Add TweetPhoto model
 # 30-Mar-2022  Wayne Shih              Update TweetPhoto model's index
 # 26-May-2022  Wayne Shih              Fetch user from cache
-# 27-May-2022  Wayne Shih              React to memcached helper
+# 27-May-2022  Wayne Shih              React to memcached helper, add Django signal-listener
 # $HISTORY$
 # =================================================================================================
 
@@ -27,6 +27,7 @@
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models.signals import post_save, pre_delete
 
 from likes.models import Like
 from tweets.constants import TWEET_PHOTO_STATUS_CHOICES, TweetPhotoStatus
@@ -114,3 +115,9 @@ class TweetPhoto(models.Model):
             created_at=self.created_at,
             file=self.file,
         )
+
+# <Wayne Shih> 29-Apr-2022
+# https://docs.djangoproject.com/en/3.1/ref/signals/#post-save
+# https://docs.djangoproject.com/en/3.1/topics/signals/#listening-to-signals
+post_save.connect(invalidate_object_cache, sender=Tweet)
+pre_delete.connect(invalidate_object_cache, sender=Tweet)

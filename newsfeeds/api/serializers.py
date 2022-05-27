@@ -14,6 +14,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 04-Nov-2021  Wayne Shih              Initial create
+# 27-May-2022  Wayne Shih              Add cached_tweet
 # $HISTORY$
 # =================================================================================================
 
@@ -25,7 +26,7 @@ from tweets.api.serializers import TweetSerializer
 
 
 class NewsFeedSerializer(serializers.ModelSerializer):
-    tweet = TweetSerializer()
+    tweet = TweetSerializer(source='cached_tweet')
 
     class Meta:
         model = NewsFeed
