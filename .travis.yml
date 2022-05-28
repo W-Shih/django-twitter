@@ -12,6 +12,7 @@
 # 06-Nov-2021  Wayne Shih              Add pylint
 # 25-Nov-2021  Wayne Shih              React to requirements.txt update
 # 26-May-2022  Wayne Shih              Add memcached
+# 28-May-2022  Wayne Shih              Add redis
 # $HISTORY$
 # =================================================================================================
 
@@ -22,10 +23,11 @@ sudo: enabled
 python:
   - "3.6"
 
-# https://docs.travis-ci.com/user/database-setup/#memcached
+# https://docs.travis-ci.com/user/database-setup/
 services:
   - mysql
   - memcached
+  - redis-server
 
 # commands to install dependencies
 install:
