@@ -9,3 +9,4 @@ djangorestframework==3.12.4
 mysqlclient==2.0.3
 pylint==2.11.1
 python-memcached==1.59
+redis==3.5.3

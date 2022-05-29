@@ -13,6 +13,7 @@
 # 25-Mar-2022  Wayne Shih              Add tests for TweetPhotos model
 # 30-Mar-2022  Wayne Shih              Add more tests for TweetPhotos model
 # 26-May-2022  Wayne Shih              Add clear cache before each test
+# 28-May-2022  Wayne Shih              Add a test to test redis cache
 # $HISTORY$
 # =================================================================================================
 
@@ -23,6 +24,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from testing.testcases import TestCase
 from tweets.models import Tweet, TweetPhoto
+from utils.redis_client import RedisClient
+from utils.redis_serializers import DjangoModelSerializer
 from utils.time_helpers import utc_now
 
 
@@ -101,6 +104,25 @@ class TweetTest(TestCase):
         self.assertEqual(like.user.username in str(like), True)
         self.assertEqual(str(like.content_type) in str(like), True)
         self.assertEqual(str(like.object_id) in str(like), True)
+
+    def test_cache_tweet_in_redis(self):
+        tweet = self.create_tweet(user=self.sc30, content='logo shot')
+        serialized_tweet = DjangoModelSerializer.serialize(tweet)
+        conn = RedisClient.get_connection()
+        conn.set(f'tweet:{tweet.id}', serialized_tweet)
+        data = conn.get(f'tweet:{tweet.id}')
+        cached_tweet = DjangoModelSerializer.deserialize(data)
+        self.assertEqual(cached_tweet, tweet)
+
+        non_existing_tweet_id = -1
+        tweet = Tweet.objects.filter(id=non_existing_tweet_id).first()
+        serialized_tweet = DjangoModelSerializer.serialize(tweet)
+        data = conn.get(f'tweet:{non_existing_tweet_id}')
+        cached_tweet = DjangoModelSerializer.deserialize(data)
+        self.assertEqual(tweet, None)
+        self.assertEqual(serialized_tweet, None)
+        self.assertEqual(data, None)
+        self.assertEqual(cached_tweet, None)
 
 
 class TweetPhotoTest(TestCase):

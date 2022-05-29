@@ -20,7 +20,8 @@
 # 24-Feb-2022  Wayne Shih              Add likes
 # 12-Mar-2022  Wayne Shih              Add notifications and inbox
 # 23-Mar-2022  Wayne Shih              Add MEDIA_ROOT, DEFAULT_FILE_STORAGE, AWS-related variables
-# 30-Apr-2022  Wayne Shih              Add CACHES
+# 30-Apr-2022  Wayne Shih              Add CACHES for memcached
+# 28-May-2022  Wayne Shih              Add redis
 # $HISTORY$
 # =================================================================================================
 
@@ -220,6 +221,13 @@ CACHES = {
         'KEY_PREFIX': 'testing:',
     },
 }
+
+# <Wayne Shih> 28-May-2022
+# https://redis.io/docs/getting-started/
+REDIS_HOST = '127.0.0.1'
+REDIS_PORT = 6379
+REDIS_DB = 0 if not TESTING else 1
+REDIS_KEY_EXPIRE_TIME = 7 * 86400  # in seconds
 
 try:
     from .local_settings import *

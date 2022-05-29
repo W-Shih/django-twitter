@@ -17,6 +17,7 @@
 # 12-Mar-2022  Wayne Shih              Add create_newsfeed
 # 23-Mar-2022  Wayne Shih              Add get_avator_url
 # 30-Apr-2022  Wayne Shih              Add clear_cache
+# 28-May-2022  Wayne Shih              Add clear redis up
 # $HISTORY$
 # =================================================================================================
 
@@ -31,6 +32,7 @@ from comments.models import Comment
 from likes.models import Like
 from newsfeeds.models import NewsFeed
 from tweets.models import Tweet
+from utils.redis_client import RedisClient
 
 
 class TestCase(DjangoTestCase):
@@ -90,3 +92,4 @@ class TestCase(DjangoTestCase):
 
     def clear_cache(self):
         caches['testing'].clear()
+        RedisClient.clear()
