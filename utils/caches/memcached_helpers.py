@@ -2,11 +2,12 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
-#   utils provide User Memcached helpers for other APIs
+#   utils provide with Memcached helpers for other APIs
 #
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 27-May-2022  Wayne Shih              Initial create
+# 30-May-2022  Wayne Shih              Refactor utils file structure
 # $HISTORY$
 # =================================================================================================
 

@@ -13,6 +13,7 @@
 # 23-Feb-2021  Wayne Shih              Initial create
 # 26-May-2022  Wayne Shih              Fetch user from cache
 # 27-May-2022  Wayne Shih              React to memcached helper
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -22,7 +23,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from utils.memcached_helpers import MemcachedHelper
+from utils.caches.memcached_helpers import MemcachedHelper
 
 
 class Like(models.Model):

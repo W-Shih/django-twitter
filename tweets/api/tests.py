@@ -22,6 +22,7 @@
 # 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
 # 26-May-2022  Wayne Shih              Add clear cache before each test
 # 29-May-2022  Wayne Shih              Add tests for user tweets cache
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -37,7 +38,7 @@ from testing.testcases import TestCase
 from tweets.models import Tweet, TweetPhoto
 from twitter.caches import USER_TWEETS_PATTERN
 from utils.pagination import EndlessPagination
-from utils.redis_client import RedisClient
+from utils.caches.redis_client import RedisClient
 
 TWEET_LIST_URL = '/api/tweets/'
 TWEET_CREATE_URL = '/api/tweets/'

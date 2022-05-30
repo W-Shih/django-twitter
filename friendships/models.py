@@ -16,6 +16,7 @@
 # 30-Apr-2022  Wayne Shih              Add Django signal-listener
 # 26-May-2022  Wayne Shih              Fetch user from cache
 # 27-May-2022  Wayne Shih              React to memcached helper
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -25,7 +26,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete
 
 from friendships.listeners import invalidate_followings_cache
-from utils.memcached_helpers import MemcachedHelper
+from utils.caches.memcached_helpers import MemcachedHelper
 
 
 class Friendship(models.Model):

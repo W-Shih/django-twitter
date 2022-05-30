@@ -14,6 +14,7 @@
 # 23-Mar-2022  Wayne Shih              Update UserProfile's __str__
 # 26-May-2022  Wayne Shih              Add Django signal-listener
 # 27-May-2022  Wayne Shih              React to memcached helper
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -23,7 +24,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete
 
 from accounts.listeners import invalidate_profile_cache
-from utils.listeners import invalidate_object_cache
+from utils.caches.listeners import invalidate_object_cache
 
 
 class UserProfile(models.Model):

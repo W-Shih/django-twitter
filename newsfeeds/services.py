@@ -7,13 +7,16 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 18-Oct-2021  Wayne Shih              Initial create
+# 30-May-2022  Wayne Shih              Add uer newsfeeds cache, react to redis helper
 # $HISTORY$
 # =================================================================================================
 
 
-from tweets.models import Tweet
-from newsfeeds.models import NewsFeed
 from friendships.services import FriendshipService
+from newsfeeds.models import NewsFeed
+from tweets.models import Tweet
+from twitter.caches import USER_NEWSFEEDS_PATTERN
+from utils.caches.redis_helpers import RedisHelper
 
 
 class NewsFeedService(object):
@@ -33,3 +36,25 @@ class NewsFeedService(object):
         # <Wayne Shih> 18-Oct-2021
         # Use bulk create instead, then only one insert query
         NewsFeed.objects.bulk_create(newsfeeds)
+
+        # <Wayne Shih> 30-May-2022
+        # Note that bulk_create() will NOT trigger post_save() signal,
+        # so here needs to push newsfeeds to cache on our own.
+        for newsfeed in newsfeeds:
+            cls.push_newsfeed_to_cache(newsfeed)
+
+    @classmethod
+    def get_cached_newsfeeds(cls, user_id):
+        # <Wayne Shih> 30-May-2022
+        # Queryset is in fact lazy loading, so this line doesn't trigger db query yet
+        newsfeeds = NewsFeed.objects.filter(user_id=user_id).order_by('-created_at')
+        key = USER_NEWSFEEDS_PATTERN.format(user_id=user_id)
+        return RedisHelper.load_objects(key, newsfeeds)
+
+    @classmethod
+    def push_newsfeed_to_cache(cls, newsfeed):
+        # <Wayne Shih> 30-May-2022
+        # Queryset is in fact lazy loading, so this line doesn't trigger db query yet
+        newsfeeds = NewsFeed.objects.filter(user_id=newsfeed.user_id).order_by('-created_at')
+        key = USER_NEWSFEEDS_PATTERN.format(user_id=newsfeed.user_id)
+        RedisHelper.push_objects(key, newsfeed, newsfeeds)

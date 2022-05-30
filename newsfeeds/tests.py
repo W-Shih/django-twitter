@@ -7,17 +7,21 @@
 # 17-Oct-2021  Wayne Shih              Initial create
 # 05-Nov-2021  Wayne Shih              Fix typo
 # 26-May-2022  Wayne Shih              Add clear cache before each test
+# 30-May-2022  Wayne Shih              Add tests to user newsfeeds cache, react to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
 
 import re
 
-from testing.testcases import TestCase
 from newsfeeds.models import NewsFeed
+from newsfeeds.services import NewsFeedService
+from testing.testcases import TestCase
+from twitter.caches import USER_NEWSFEEDS_PATTERN
+from utils.caches.redis_client import RedisClient
 
 
-class NewsfeedTest(TestCase):
+class NewsfeedTests(TestCase):
 
     def setUp(self):
         self.clear_cache()
@@ -88,3 +92,59 @@ class NewsfeedTest(TestCase):
             user=self.newsfeed.user,
             tweet=self.newsfeed.tweet,
         ), str(self.newsfeed))
+
+
+class NewsfeedCacheTests(TestCase):
+
+    def setUp(self):
+        self.clear_cache()
+        self.kd35 = self.create_user(username='kd35')
+
+    def test_get_user_newsfeeds(self):
+        newsfeed_ids = []
+        for i in range(3):
+            tweet = self.create_tweet(self.kd35, f'kd newsfeed - {i}')
+            newsfeed = self.create_newsfeed(self.kd35, tweet)
+            newsfeed_ids.append(newsfeed.id)
+        newsfeed_ids = newsfeed_ids[::-1]
+
+        # test cache miss  <Wayne Shih> 30-May-2022
+        conn = RedisClient.get_connection()
+        RedisClient.clear()
+        key_kd35 = USER_NEWSFEEDS_PATTERN.format(user_id=self.kd35.id)
+        self.assertEqual(conn.exists(key_kd35), False)
+
+        kd35_newsfeeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
+        self.assertEqual(type(kd35_newsfeeds), list)
+        self.assertEqual([feed.id for feed in kd35_newsfeeds], newsfeed_ids)
+        self.assertEqual(conn.exists(key_kd35), True)
+
+        # test cache hit  <Wayne Shih> 30-May-2022
+        self.assertEqual(conn.exists(key_kd35), True)
+        kd35_newsfeeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
+        self.assertEqual(conn.exists(key_kd35), True)
+        self.assertEqual(type(kd35_newsfeeds), list)
+        self.assertEqual([feed.id for feed in kd35_newsfeeds], newsfeed_ids)
+
+        # test push newsfeed to cache while key exists  <Wayne Shih> 30-May-2022
+        self.assertEqual(conn.exists(key_kd35), True)
+        new_tweet = self.create_tweet(self.kd35, 'I am going to join GW - new')
+        new_kd35_feed = self.create_newsfeed(self.kd35, new_tweet)
+        newsfeed_ids.insert(0, new_kd35_feed.id)
+        self.assertEqual(conn.exists(key_kd35), True)
+
+        kd35_newsfeeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
+        self.assertEqual(type(kd35_newsfeeds), list)
+        self.assertEqual([feed.id for feed in kd35_newsfeeds], newsfeed_ids)
+
+        # test push newsfeed to cache while key does NOT exist  <Wayne Shih> 30-May-2022
+        RedisClient.clear()
+        self.assertEqual(conn.exists(key_kd35), False)
+        new_tweet = self.create_tweet(self.kd35, 'I am going to join Nets - new')
+        new_kd35_feed = self.create_newsfeed(self.kd35, new_tweet)
+        newsfeed_ids.insert(0, new_kd35_feed.id)
+        self.assertEqual(conn.exists(key_kd35), True)
+
+        kd35_newsfeeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
+        self.assertEqual([feed.id for feed in kd35_newsfeeds], newsfeed_ids)
+        self.assertEqual(type(kd35_newsfeeds), list)

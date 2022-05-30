@@ -7,17 +7,14 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 27-Mar-2022  Wayne Shih              Initial create
-# 29-May-2022  Wayne Shih              Add uer tweets cache
+# 29-May-2022  Wayne Shih              Add uer tweets cache, react to redis helper
 # $HISTORY$
 # =================================================================================================
 
 
-from django.conf import settings
-
 from tweets.models import Tweet, TweetPhoto
 from twitter.caches import USER_TWEETS_PATTERN
-from utils.redis_client import RedisClient
-from utils.redis_serializers import DjangoModelSerializer
+from utils.caches.redis_helpers import RedisHelper
 
 
 class TweetService(object):
@@ -42,14 +39,6 @@ class TweetService(object):
         TweetPhoto.objects.bulk_create(tweet_photos)
 
     @classmethod
-    def _load_tweets_to_cache(cls, key, tweets):
-        conn = RedisClient.get_connection()
-        serialized_list = [DjangoModelSerializer.serialize(tweet) for tweet in tweets]
-        if serialized_list:
-            conn.rpush(key, *serialized_list)
-            conn.expire(key, settings.REDIS_KEY_EXPIRE_TIME)
-
-    @classmethod
     def _get_tweet_queryset(cls, user_id, view=None):
         if view is not None:
             return view.filter_queryset(
@@ -65,17 +54,7 @@ class TweetService(object):
         # Queryset is in fact lazy loading, so this line doesn't trigger db query yet
         tweets = cls._get_tweet_queryset(user_id, view)
         key = USER_TWEETS_PATTERN.format(user_id=user_id)
-
-        conn = RedisClient.get_connection()
-        if conn.exists(key):
-            serialized_list = conn.lrange(key, 0, -1)
-            return [
-                DjangoModelSerializer.deserialize(serialized_data)
-                for serialized_data in serialized_list
-            ]
-
-        cls._load_tweets_to_cache(key, tweets)
-        return list(tweets)
+        return RedisHelper.load_objects(key, tweets)
 
     @classmethod
     def push_tweet_to_user_tweets_cache(cls, tweet):
@@ -83,9 +62,4 @@ class TweetService(object):
         # Queryset is in fact lazy loading, so this line doesn't trigger db query yet
         tweets = Tweet.objects.filter(user_id=tweet.user_id).order_by('-created_at')
         key = USER_TWEETS_PATTERN.format(user_id=tweet.user_id)
-        conn = RedisClient.get_connection()
-        if conn.exists(key):
-            conn.lpush(key, DjangoModelSerializer.serialize(tweet))
-            return
-
-        cls._load_tweets_to_cache(key, tweets)
+        RedisHelper.push_objects(key, tweet, tweets)

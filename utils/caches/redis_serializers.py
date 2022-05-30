@@ -7,13 +7,14 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 28-May-2022  Wayne Shih              Initial create
+# 30-May-2022  Wayne Shih              Refactor utils file structure
 # $HISTORY$
 # =================================================================================================
 
 
 from django.core import serializers
 
-from utils.json_encoder import DjangoJSONEncoder as TwitterDjangoJSONEncoder
+from utils.caches.json_encoder import DjangoJSONEncoder as TwitterDjangoJSONEncoder
 
 
 class DjangoModelSerializer:

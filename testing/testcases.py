@@ -18,6 +18,7 @@
 # 23-Mar-2022  Wayne Shih              Add get_avator_url
 # 30-Apr-2022  Wayne Shih              Add clear_cache
 # 28-May-2022  Wayne Shih              Add clear redis up
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -32,7 +33,7 @@ from comments.models import Comment
 from likes.models import Like
 from newsfeeds.models import NewsFeed
 from tweets.models import Tweet
-from utils.redis_client import RedisClient
+from utils.caches.redis_client import RedisClient
 
 
 class TestCase(DjangoTestCase):

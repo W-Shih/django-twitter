@@ -12,15 +12,19 @@
 #    Date      Name                    Description of Change
 # 17-Oct-2021  Wayne Shih              Initial create
 # 27-May-2022  Wayne Shih              Add cached_tweet
+# 29-May-2022  Wayne Shih              Add Django signal-listener for user newsfeeds cache
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save
 
+from newsfeeds.listeners import push_newsfeed_to_cache
 from tweets.models import Tweet
-from utils.memcached_helpers import MemcachedHelper
+from utils.caches.memcached_helpers import MemcachedHelper
 
 
 class NewsFeed(models.Model):
@@ -39,3 +43,9 @@ class NewsFeed(models.Model):
     @property
     def cached_tweet(self):
         return MemcachedHelper.get_object_through_cache(Tweet, self.tweet_id)
+
+
+# <Wayne Shih> 29-Apr-2022
+# https://docs.djangoproject.com/en/3.1/ref/signals/#post-save
+# https://docs.djangoproject.com/en/3.1/topics/signals/#listening-to-signals
+post_save.connect(push_newsfeed_to_cache, sender=NewsFeed)
