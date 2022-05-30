@@ -12,9 +12,13 @@
 # 27-Apr-2021  Wayne Shih              Refactor being under util and rename to EndlessPagination
 # 28-Apr-2021  Wayne Shih              Add generic key to render endless pagination results
 # 29-Apr-2022  Wayne Shih              React to deprecating keys in tweets and newsfeeds list api
+# 29-May-2022  Wayne Shih              Make paginate_queryset() compatible with list
 # $HISTORY$
 # =================================================================================================
 
+
+from typing import Union
+from dateutil import parser
 
 from django.db.models import QuerySet
 from rest_framework.pagination import BasePagination
@@ -31,9 +35,41 @@ class EndlessPagination(BasePagination):
         self.request = None
         self.has_next = False
 
-    def paginate_queryset(self, queryset: QuerySet, request: Request, view=None):
+    def _paginate_list(self, reversed_ordered_list: list):
+        if 'created_at__gt' in self.request.query_params:
+            created_at__gt = parser.isoparse(self.request.query_params['created_at__gt'])
+            objects = []
+            for index, obj in enumerate(reversed_ordered_list):
+                if obj.created_at > created_at__gt:
+                    objects.append(obj)
+                else:
+                    break
+            self.has_next = False
+            return objects
+
+        index = 0
+        if 'created_at__lt' in self.request.query_params:
+            created_at__lt = parser.isoparse(self.request.query_params['created_at__lt'])
+            for index, obj in enumerate(reversed_ordered_list):
+                if obj.created_at < created_at__lt:
+                    break
+            else:
+                self.has_next = False
+                return []
+
+        objects = reversed_ordered_list[index:index + self.page_size + 1]
+        self.has_next = (len(objects) > self.page_size)
+        return objects[:self.page_size]
+
+    def paginate_queryset(self, queryset: Union[QuerySet, list], request: Request, view=None):
         self.request = request
         self.page_size = int(request.query_params.get('page_size', self.page_size))
+
+        if isinstance(queryset, list):
+            # <Wayne Shih> 29-May-2022
+            # The fundamental assumption here is that all data in queryset
+            # is in the cache in this case.
+            return self._paginate_list(queryset)
 
         # <Wayne Shih> 08-Apr-2022
         # https://docs.djangoproject.com/en/4.0/ref/models/querysets/#gt

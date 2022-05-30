@@ -14,6 +14,7 @@
 # 30-Mar-2022  Wayne Shih              Add more tests for TweetPhotos model
 # 26-May-2022  Wayne Shih              Add clear cache before each test
 # 28-May-2022  Wayne Shih              Add a test to test redis cache
+# 28-May-2022  Wayne Shih              Add tests to user tweets cache
 # $HISTORY$
 # =================================================================================================
 
@@ -24,12 +25,14 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from testing.testcases import TestCase
 from tweets.models import Tweet, TweetPhoto
+from tweets.services import TweetService
+from twitter.caches import USER_TWEETS_PATTERN
 from utils.redis_client import RedisClient
 from utils.redis_serializers import DjangoModelSerializer
 from utils.time_helpers import utc_now
 
 
-class TweetTest(TestCase):
+class TweetTests(TestCase):
 
     def setUp(self):
         self.clear_cache()
@@ -105,27 +108,8 @@ class TweetTest(TestCase):
         self.assertEqual(str(like.content_type) in str(like), True)
         self.assertEqual(str(like.object_id) in str(like), True)
 
-    def test_cache_tweet_in_redis(self):
-        tweet = self.create_tweet(user=self.sc30, content='logo shot')
-        serialized_tweet = DjangoModelSerializer.serialize(tweet)
-        conn = RedisClient.get_connection()
-        conn.set(f'tweet:{tweet.id}', serialized_tweet)
-        data = conn.get(f'tweet:{tweet.id}')
-        cached_tweet = DjangoModelSerializer.deserialize(data)
-        self.assertEqual(cached_tweet, tweet)
 
-        non_existing_tweet_id = -1
-        tweet = Tweet.objects.filter(id=non_existing_tweet_id).first()
-        serialized_tweet = DjangoModelSerializer.serialize(tweet)
-        data = conn.get(f'tweet:{non_existing_tweet_id}')
-        cached_tweet = DjangoModelSerializer.deserialize(data)
-        self.assertEqual(tweet, None)
-        self.assertEqual(serialized_tweet, None)
-        self.assertEqual(data, None)
-        self.assertEqual(cached_tweet, None)
-
-
-class TweetPhotoTest(TestCase):
+class TweetPhotoTests(TestCase):
 
     def setUp(self):
         self.lbj23 = self.create_user(username='cavs_lbj23')
@@ -187,3 +171,86 @@ class TweetPhotoTest(TestCase):
             created_at=photo.created_at,
             file=photo.file,
         ), str(photo))
+
+
+class TweetCacheTests(TestCase):
+
+    def setUp(self):
+        self.clear_cache()
+
+        self.lbj23 = self.create_user(username='cavs_lbj23')
+        self.kb24 = self.create_user(username='kobe24')
+        self.sc30 = self.create_user(username='curry', password='sc30')
+
+    def test_cache_tweet_in_redis(self):
+        # test serialize/deserialize tweet to/from cache  <Wayne Shih> 29-May-2022
+        tweet = self.create_tweet(user=self.sc30, content='logo shot')
+        serialized_tweet = DjangoModelSerializer.serialize(tweet)
+        conn = RedisClient.get_connection()
+        conn.set(f'tweet:{tweet.id}', serialized_tweet)
+        data = conn.get(f'tweet:{tweet.id}')
+        cached_tweet = DjangoModelSerializer.deserialize(data)
+        self.assertEqual(cached_tweet, tweet)
+
+        # test serialize/deserialize None object to/from cache  <Wayne Shih> 29-May-2022
+        non_existing_tweet_id = -1
+        tweet = Tweet.objects.filter(id=non_existing_tweet_id).first()
+        serialized_tweet = DjangoModelSerializer.serialize(tweet)
+        data = conn.get(f'tweet:{non_existing_tweet_id}')
+        cached_tweet = DjangoModelSerializer.deserialize(data)
+        self.assertEqual(tweet, None)
+        self.assertEqual(serialized_tweet, None)
+        self.assertEqual(data, None)
+        self.assertEqual(cached_tweet, None)
+
+    def test_get_user_tweets(self):
+        tweet_ids = []
+        for i in range(3):
+            tweet = self.create_tweet(self.sc30, f'logo shot - {i}')
+            tweet_ids.append(tweet.id)
+        tweet_ids = tweet_ids[::-1]
+
+        # test cache miss  <Wayne Shih> 29-May-2022
+        conn = RedisClient.get_connection()
+        key_sc30 = USER_TWEETS_PATTERN.format(user_id=self.sc30.id)
+        key_lbj23 = USER_TWEETS_PATTERN.format(user_id=self.lbj23.id)
+        RedisClient.clear()
+        self.assertEqual(conn.exists(key_sc30), False)
+        self.assertEqual(conn.exists(key_lbj23), False)
+
+        sc30_tweets = TweetService.get_cached_tweets(self.sc30.id)
+        lbj23_tweets = TweetService.get_cached_tweets(self.lbj23.id)
+        self.assertEqual(type(sc30_tweets), list)
+        self.assertEqual(type(lbj23_tweets), list)
+        self.assertEqual(conn.exists(key_sc30), True)
+        self.assertEqual(conn.exists(key_lbj23), False)
+        self.assertEqual([tweet.id for tweet in sc30_tweets], tweet_ids)
+        self.assertEqual(len(lbj23_tweets), 0)
+
+        # test cache hit  <Wayne Shih> 29-May-2022
+        self.assertEqual(conn.exists(key_sc30), True)
+        sc30_tweets = TweetService.get_cached_tweets(self.sc30.id)
+        self.assertEqual(type(sc30_tweets), list)
+        self.assertEqual([tweet.id for tweet in sc30_tweets], tweet_ids)
+        self.assertEqual(conn.exists(key_sc30), True)
+
+        # test push tweet to cache while key exists  <Wayne Shih> 29-May-2022
+        self.assertEqual(conn.exists(key_sc30), True)
+        new_sc30_tweet = self.create_tweet(self.sc30, 'logo shot - new')
+        tweet_ids.insert(0, new_sc30_tweet.id)
+        self.assertEqual(conn.exists(key_sc30), True)
+
+        sc30_tweets = TweetService.get_cached_tweets(self.sc30.id)
+        self.assertEqual(type(sc30_tweets), list)
+        self.assertEqual([tweet.id for tweet in sc30_tweets], tweet_ids)
+
+        # test push tweet to cache while key does NOT exist  <Wayne Shih> 29-May-2022
+        RedisClient.clear()
+        self.assertEqual(conn.exists(key_lbj23), False)
+        new_lbj23_tweet = self.create_tweet(self.lbj23, 'king')
+        tweet_ids.insert(0, new_lbj23_tweet.id)
+        self.assertEqual(conn.exists(key_lbj23), True)
+
+        lbj23_tweets = TweetService.get_cached_tweets(self.lbj23.id)
+        self.assertEqual(type(lbj23_tweets), list)
+        self.assertEqual([tweet.id for tweet in lbj23_tweets], [new_lbj23_tweet.id])
