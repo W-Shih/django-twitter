@@ -21,6 +21,7 @@
 # 26-May-2022  Wayne Shih              Fetch user from cache
 # 27-May-2022  Wayne Shih              React to memcached helper, add Django signal-listener
 # 29-May-2022  Wayne Shih              Add Django signal-listener for user tweets cache
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -33,8 +34,8 @@ from django.db.models.signals import post_save, pre_delete
 from likes.models import Like
 from tweets.constants import TWEET_PHOTO_STATUS_CHOICES, TweetPhotoStatus
 from tweets.listeners import push_tweet_to_user_tweets_cache
-from utils.memcached_helpers import MemcachedHelper
-from utils.listeners import invalidate_object_cache
+from utils.caches.memcached_helpers import MemcachedHelper
+from utils.caches.listeners import invalidate_object_cache
 from utils.time_helpers import utc_now
 
 

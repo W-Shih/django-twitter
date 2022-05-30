@@ -7,7 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 18-Oct-2021  Wayne Shih              Initial create
-# 30-May-2022  Wayne Shih              Add uer newsfeeds cache, refactor redis helper
+# 30-May-2022  Wayne Shih              Add uer newsfeeds cache, react to redis helper
 # $HISTORY$
 # =================================================================================================
 
@@ -16,7 +16,7 @@ from friendships.services import FriendshipService
 from newsfeeds.models import NewsFeed
 from tweets.models import Tweet
 from twitter.caches import USER_NEWSFEEDS_PATTERN
-from utils.redis_helpers import RedisHelper
+from utils.caches.redis_helpers import RedisHelper
 
 
 class NewsFeedService(object):

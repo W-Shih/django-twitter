@@ -13,6 +13,7 @@
 # 17-Oct-2021  Wayne Shih              Initial create
 # 27-May-2022  Wayne Shih              Add cached_tweet
 # 29-May-2022  Wayne Shih              Add Django signal-listener for user newsfeeds cache
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -23,7 +24,7 @@ from django.db.models.signals import post_save
 
 from newsfeeds.listeners import push_newsfeed_to_cache
 from tweets.models import Tweet
-from utils.memcached_helpers import MemcachedHelper
+from utils.caches.memcached_helpers import MemcachedHelper
 
 
 class NewsFeed(models.Model):

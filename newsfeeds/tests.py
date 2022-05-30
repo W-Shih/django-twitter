@@ -7,7 +7,7 @@
 # 17-Oct-2021  Wayne Shih              Initial create
 # 05-Nov-2021  Wayne Shih              Fix typo
 # 26-May-2022  Wayne Shih              Add clear cache before each test
-# 30-May-2022  Wayne Shih              Add tests to user newsfeeds cache
+# 30-May-2022  Wayne Shih              Add tests to user newsfeeds cache, react to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -18,7 +18,7 @@ from newsfeeds.models import NewsFeed
 from newsfeeds.services import NewsFeedService
 from testing.testcases import TestCase
 from twitter.caches import USER_NEWSFEEDS_PATTERN
-from utils.redis_client import RedisClient
+from utils.caches.redis_client import RedisClient
 
 
 class NewsfeedTests(TestCase):

@@ -7,14 +7,14 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 27-Mar-2022  Wayne Shih              Initial create
-# 29-May-2022  Wayne Shih              Add uer tweets cache, refactor redis helper
+# 29-May-2022  Wayne Shih              Add uer tweets cache, react to redis helper
 # $HISTORY$
 # =================================================================================================
 
 
 from tweets.models import Tweet, TweetPhoto
 from twitter.caches import USER_TWEETS_PATTERN
-from utils.redis_helpers import RedisHelper
+from utils.caches.redis_helpers import RedisHelper
 
 
 class TweetService(object):

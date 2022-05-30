@@ -16,6 +16,7 @@
 # 26-Feb-2022  Wayne Shih              Add comments for ContentType
 # 26-May-2022  Wayne Shih              Add cached_user
 # 27-May-2022  Wayne Shih              React to memcached helper
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -26,7 +27,7 @@ from django.db import models
 
 from likes.models import Like
 from tweets.models import Tweet
-from utils.memcached_helpers import MemcachedHelper
+from utils.caches.memcached_helpers import MemcachedHelper
 
 
 class Comment(models.Model):

@@ -7,6 +7,7 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 28-May-2022  Wayne Shih              Initial create
+# 30-May-2022  Wayne Shih              Refactor utils file structure
 # $HISTORY$
 # =================================================================================================
 
@@ -14,10 +15,10 @@
 from django.conf import settings
 
 from testing.testcases import TestCase
-from utils.redis_client import RedisClient
+from utils.caches.redis_client import RedisClient
 
 
-class UtilsTest(TestCase):
+class UtilsCachesTest(TestCase):
 
     def setUp(self):
         self.clear_cache()

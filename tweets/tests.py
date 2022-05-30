@@ -15,6 +15,7 @@
 # 26-May-2022  Wayne Shih              Add clear cache before each test
 # 28-May-2022  Wayne Shih              Add a test to test redis cache
 # 28-May-2022  Wayne Shih              Add tests to user tweets cache
+# 30-May-2022  Wayne Shih              React to utils file structure refactor
 # $HISTORY$
 # =================================================================================================
 
@@ -27,8 +28,8 @@ from testing.testcases import TestCase
 from tweets.models import Tweet, TweetPhoto
 from tweets.services import TweetService
 from twitter.caches import USER_TWEETS_PATTERN
-from utils.redis_client import RedisClient
-from utils.redis_serializers import DjangoModelSerializer
+from utils.caches.redis_client import RedisClient
+from utils.caches.redis_serializers import DjangoModelSerializer
 from utils.time_helpers import utc_now
 
 

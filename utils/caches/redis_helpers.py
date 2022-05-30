@@ -7,14 +7,15 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 30-May-2022  Wayne Shih              Initial create
+# 30-May-2022  Wayne Shih              Refactor utils file structure
 # $HISTORY$
 # =================================================================================================
 
 
 from django.conf import settings
 
-from utils.redis_client import RedisClient
-from utils.redis_serializers import DjangoModelSerializer
+from utils.caches.redis_client import RedisClient
+from utils.caches.redis_serializers import DjangoModelSerializer
 
 
 class RedisHelper(object):
