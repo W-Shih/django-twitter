@@ -21,10 +21,12 @@
 # 29-Apr-2022  Wayne Shih              Add a test with invalid user_id for list api
 # 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
 # 26-May-2022  Wayne Shih              Add clear cache before each test
+# 29-May-2022  Wayne Shih              Add tests for user tweets cache
 # $HISTORY$
 # =================================================================================================
 
 
+from datetime import timedelta
 from urllib import parse
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -32,9 +34,10 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from testing.testcases import TestCase
-from utils.pagination import EndlessPagination
 from tweets.models import Tweet, TweetPhoto
-
+from twitter.caches import USER_TWEETS_PATTERN
+from utils.pagination import EndlessPagination
+from utils.redis_client import RedisClient
 
 TWEET_LIST_URL = '/api/tweets/'
 TWEET_CREATE_URL = '/api/tweets/'
@@ -455,6 +458,16 @@ class TweetApiTests(TestCase):
             tweets[page_size * 3 - 1].id
         )
 
+        # Test after the last page of kb24's tweets  <Wayne Shih> 29-May-2022
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': kb24.id,
+            'created_at__lt': tweets[page_size * 2 - 1].created_at - timedelta(days=1),
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(len(response.data['results']), 0)
+
         # Test user1's new tweets  <Wayne Shih> 25-Apr-2022
         response = self.anonymous_client.get(TWEET_LIST_URL, {
             'user_id': kb24.id,
@@ -475,3 +488,42 @@ class TweetApiTests(TestCase):
         self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(response.data['results'][0]['id'], new_tweet2.id)
         self.assertEqual(response.data['results'][1]['id'], new_tweet1.id)
+
+    def test_cached_tweet_list(self):
+        kb24 = self.create_user(username='kb24')
+
+        # Test kb24's empty tweets  <Wayne Shih> 29-May-2022
+        response = self.anonymous_client.get(TWEET_LIST_URL, {'user_id': kb24.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(response.data['results'], [])
+
+        tweets = []
+        for i in range(2):
+            tweet = self.create_tweet(kb24, f'kb24::tweet::{i}')
+            tweets.append(tweet)
+        tweets = tweets[::-1]
+
+        # test cache miss  <Wayne Shih> 29-May-2022
+        conn = RedisClient.get_connection()
+        key_kb24 = USER_TWEETS_PATTERN.format(user_id=kb24.id)
+        RedisClient.clear()
+        self.assertEqual(conn.exists(key_kb24), False)
+
+        response = self.anonymous_client.get(TWEET_LIST_URL, {'user_id': kb24.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(response.data['next'], None)
+        for i in range(len(tweets)):
+            self.assertEqual(response.data['results'][i]['id'], tweets[i].id)
+        self.assertEqual(conn.exists(key_kb24), True)
+
+        # test cache hit  <Wayne Shih> 29-May-2022
+        self.assertEqual(conn.exists(key_kb24), True)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(response.data['has_next'], False)
+        for i in range(len(tweets)):
+            self.assertEqual(response.data['results'][i]['id'], tweets[i].id)
+        self.assertEqual(conn.exists(key_kb24), True)

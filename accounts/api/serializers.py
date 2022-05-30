@@ -26,6 +26,7 @@
 # 17-Mar-2022  Wayne Shih              Add UserSerializerForNotification
 # 20-Mar-2022  Wayne Shih              Create user's profile right after user has been created
 # 23-Mar-2022  Wayne Shih              Update user-related serializer and add UserProfileSerializerForUpdate
+# 29-May-2022  Wayne Shih              Fix style
 # $HISTORY$
 # =================================================================================================
 
@@ -144,7 +145,7 @@ class SignupSerializer(serializers.ModelSerializer):
         )
         # <Wayne Shih> 19-Mar-2022
         # Create user's profile right after user has been created
-        user.profile
+        getattr(user, 'profile')
         return user
 
 

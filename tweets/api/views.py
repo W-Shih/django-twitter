@@ -21,6 +21,7 @@
 # 27-Apr-2022  Wayne Shih              React to renaming to EndlessPagination
 # 29-Apr-2022  Wayne Shih              Fix query string bug for list api
 # 29-Apr-2022  Wayne Shih              Deprecate key in tweets list api
+# 29-May-2022  Wayne Shih              React to user tweet cache
 # $HISTORY$
 # =================================================================================================
 
@@ -39,6 +40,7 @@ from tweets.api.serializers import (
     TweetSerializerForDetail,
 )
 from tweets.models import Tweet
+from tweets.services import TweetService
 from utils.pagination import EndlessPagination
 from utils.decorators import required_params
 
@@ -90,8 +92,8 @@ class TweetViewSet(viewsets.GenericViewSet):
     # - https://www.django-rest-framework.org/api-guide/viewsets/#example
     @required_params(params=['user_id'])
     def list(self, request: Request):
-        tweets = self.filter_queryset(self.get_queryset()).prefetch_related('user')
-        # print('--- sql --- \n{}'.format(tweets.query))
+        user_id = request.query_params['user_id']
+        tweets = TweetService.get_cached_tweets(user_id, self)
         page = self.paginate_queryset(tweets)
         serializer = TweetSerializer(page, many=True, context={'request': request})
         return self.get_paginated_response(serializer.data)
