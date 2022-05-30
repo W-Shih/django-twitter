@@ -8,12 +8,12 @@
 #    Date      Name                    Description of Change
 # 25-May-2022  Wayne Shih              Initial create
 # 27-May-2022  Wayne Shih              React to memcached helper
+# 29-May-2022  Wayne Shih              Fix style
 # $HISTORY$
 # =================================================================================================
 
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.cache import caches
 
 from accounts.models import UserProfile
