@@ -22,6 +22,7 @@
 # 27-May-2022  Wayne Shih              React to memcached helper, add Django signal-listener
 # 29-May-2022  Wayne Shih              Add Django signal-listener for user tweets cache
 # 30-May-2022  Wayne Shih              React to utils file structure refactor
+# 05-Jun-2022  Wayne Shih              Add denormalization for comments_count and likes_count
 # $HISTORY$
 # =================================================================================================
 
@@ -43,6 +44,10 @@ class Tweet(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     content = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
+    # <Wayne Shih> 05-Jun-2022
+    # tweet model denormalization
+    comments_count = models.IntegerField(default=0, null=True)
+    likes_count = models.IntegerField(default=0, null=True)
 
     class Meta:
         index_together = (('user', 'created_at'),)
