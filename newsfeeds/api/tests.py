@@ -11,15 +11,19 @@
 # 29-Apr-2022  Wayne Shih              React to deprecating key in newsfeeds list api
 # 26-May-2022  Wayne Shih              Add a test to test cached user
 # 26-May-2022  Wayne Shih              Add a test to test cached tweet
+# 05-Jun-2022  Wayne Shih              Add test for only caching REDIS_LIST_SIZE_LIMIT in redis
 # $HISTORY$
 # =================================================================================================
 
 
 from urllib import parse
 
+from django.conf import settings
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from newsfeeds.models import NewsFeed
+from newsfeeds.services import NewsFeedService
 from testing.testcases import TestCase
 from utils.pagination import EndlessPagination
 
@@ -174,7 +178,7 @@ class NewsFeedApiTests(TestCase):
         self.assertEqual(newsfeeds[1]['tweet']['user']['username'], 'kobe0824')  # user cache hit
         self.assertEqual(newsfeeds[1]['tweet']['user']['nickname'], 'lakers_kb0824')  # profile cache hit
 
-    def test_cached_tweet(self):
+    def test_cached_tweets(self):
         kobe24_tweet1 = self.create_tweet(self.kobe24, 'content1')
         kobe24_tweet2 = self.create_tweet(self.kobe24, 'content2')
         self.create_newsfeed(self.kobe24, kobe24_tweet1)
@@ -236,4 +240,84 @@ class NewsFeedApiTests(TestCase):
         self.assertEqual(newsfeeds[0]['tweet']['content'], 'new_content2')  # tweet hit
         self.assertEqual(newsfeeds[1]['tweet']['user']['username'], 'kobe0824')  # user cache hit
         self.assertEqual(newsfeeds[1]['tweet']['content'], 'content1')  # tweet hit
-        
+
+    def _get_all_paginated_newsfeeds(self, client):
+        response = client.get(NEWSFEED_LIST_URL)
+        results = response.data['results']
+        while response.data['has_next']:
+            response = client.get(NEWSFEED_LIST_URL, {
+                'created_at__lt': results[-1]['created_at'],
+            })
+            results.extend(response.data['results'])
+        return results
+
+    def test_redis_list_size_limit(self):
+        page_size = EndlessPagination.page_size
+        max_page_size = EndlessPagination.max_page_size
+        list_size_limit = settings.REDIS_LIST_SIZE_LIMIT
+
+        users = [self.create_user(f'user::{i}') for i in range(5)]
+        newsfeeds = []
+        num_newsfeeds = list_size_limit + page_size
+        self.assertEqual(num_newsfeeds > max_page_size, True)
+        for i in range(num_newsfeeds):
+            user = users[i % 5]
+            tweet = self.create_tweet(user, f'{user.username}::tweet::{i}')
+            newsfeed = self.create_newsfeed(self.lbj23, tweet)
+            newsfeeds.append(newsfeed)
+        newsfeeds = newsfeeds[::-1]
+
+        # Test cached list and qs size  <Wayne Shih> 04-Jun-2022
+        cached_newsfeeds = NewsFeedService.get_cached_newsfeeds(self.lbj23.id)
+        qs_newsfeeds = NewsFeed.objects.filter(user_id=self.lbj23.id)
+        self.assertEqual(len(cached_newsfeeds), list_size_limit)
+        self.assertEqual(qs_newsfeeds.count(), num_newsfeeds)
+
+        # Test get all newsfeeds via api  <Wayne Shih> 04-Jun-2022
+        results = self._get_all_paginated_newsfeeds(self.lbj23_client)
+        self.assertEqual(len(results), num_newsfeeds)
+        for i in range(num_newsfeeds):
+            self.assertEqual(results[i]['id'], newsfeeds[i].id)
+
+        # Test max page size  <Wayne Shih> 04-Jun-2022
+        query_params = {'page_size': num_newsfeeds * 2}
+        response = self.lbj23_client.get(NEWSFEED_LIST_URL, query_params)
+        page_last_feed_created_at = str(newsfeeds[max_page_size - 1].created_at.astimezone())\
+            .replace(' ', 'T')\
+            .replace('+00:00', 'Z')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['has_next'], True)
+        self.assertEqual(len(response.data['results']), max_page_size)
+        for i in range(max_page_size):
+            self.assertEqual(results[i]['id'], newsfeeds[i].id)
+        self.assertEqual(
+            page_last_feed_created_at in parse.unquote(response.data['next']),
+            True
+        )
+
+        # Test add new feeds  <Wayne Shih> 04-Jun-2022
+        self.create_friendship(self.lbj23, self.kobe24)
+        kb_tweet = self.create_tweet(self.kobe24, 'kb new tweet')
+        NewsFeedService.fanout_to_followers(kb_tweet)
+
+        def _test_newsfeeds_after_new_feed_pushed():
+            results = self._get_all_paginated_newsfeeds(self.lbj23_client)
+            self.assertEqual(len(results), num_newsfeeds + 1)
+            self.assertEqual(results[0]['tweet']['id'], kb_tweet.id)
+            for i in range(num_newsfeeds):
+                self.assertEqual(results[i + 1]['id'], newsfeeds[i].id)
+
+        _test_newsfeeds_after_new_feed_pushed()
+
+        # Test cache has been clear  <Wayne Shih> 04-Jun-2022
+        self.clear_cache()
+        _test_newsfeeds_after_new_feed_pushed()
+
+        self.clear_cache()
+        query_params = {'created_at__gt': newsfeeds[0].created_at}
+        response = self.lbj23_client.get(NEWSFEED_LIST_URL, query_params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['next'], None)
+        self.assertEqual(response.data['has_next'], False)
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['tweet']['id'], kb_tweet.id)

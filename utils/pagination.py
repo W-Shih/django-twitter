@@ -13,13 +13,14 @@
 # 28-Apr-2021  Wayne Shih              Add generic key to render endless pagination results
 # 29-Apr-2022  Wayne Shih              React to deprecating keys in tweets and newsfeeds list api
 # 29-May-2022  Wayne Shih              Make paginate_queryset() compatible with list
+# 05-Jun-2022  Wayne Shih              React to only caching REDIS_LIST_SIZE_LIMIT in redis
 # $HISTORY$
 # =================================================================================================
 
 
-from typing import Union
 from dateutil import parser
 
+from django.conf import settings
 from django.db.models import QuerySet
 from rest_framework.pagination import BasePagination
 from rest_framework.request import Request
@@ -28,7 +29,9 @@ from rest_framework.utils.urls import replace_query_param
 
 
 class EndlessPagination(BasePagination):
-    page_size = 20
+    page_size = 20 if not settings.TESTING else 10
+    max_page_size = page_size * 2
+    request = None
 
     def __init__(self):
         super().__init__()
@@ -61,15 +64,26 @@ class EndlessPagination(BasePagination):
         self.has_next = (len(objects) > self.page_size)
         return objects[:self.page_size]
 
-    def paginate_queryset(self, queryset: Union[QuerySet, list], request: Request, view=None):
+    def _set_up_attrs(self, request: Request):
         self.request = request
         self.page_size = int(request.query_params.get('page_size', self.page_size))
+        if self.page_size > self.max_page_size:
+            self.page_size = self.max_page_size
 
-        if isinstance(queryset, list):
-            # <Wayne Shih> 29-May-2022
-            # The fundamental assumption here is that all data in queryset
-            # is in the cache in this case.
-            return self._paginate_list(queryset)
+    def paginate_cached_list(self, cached_list: list, request: Request):
+        self._set_up_attrs(request)
+        paginated_list = self._paginate_list(cached_list)
+        if 'created_at__gt' in self.request.query_params:
+            return paginated_list
+
+        if self.has_next:
+            return paginated_list
+        if len(cached_list) < settings.REDIS_LIST_SIZE_LIMIT:
+            return paginated_list
+        return None
+
+    def paginate_queryset(self, queryset: QuerySet, request: Request, view=None):
+        self._set_up_attrs(request)
 
         # <Wayne Shih> 08-Apr-2022
         # https://docs.djangoproject.com/en/4.0/ref/models/querysets/#gt
