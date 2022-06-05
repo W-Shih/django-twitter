@@ -14,6 +14,7 @@
 # 26-May-2022  Wayne Shih              Fetch user from cache
 # 27-May-2022  Wayne Shih              React to memcached helper
 # 30-May-2022  Wayne Shih              React to utils file structure refactor
+# 05-Jun-2022  Wayne Shih              React to tweet model denormalization for likes_count
 # $HISTORY$
 # =================================================================================================
 
@@ -22,7 +23,9 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models.signals import post_save, pre_delete
 
+from likes.listeners import decrease_likes_count, increase_likes_count
 from utils.caches.memcached_helpers import MemcachedHelper
 
 
@@ -59,3 +62,10 @@ class Like(models.Model):
     @property
     def cached_user(self):
         return MemcachedHelper.get_object_through_cache(User, self.user_id)
+
+
+# <Wayne Shih> 05-Jun-2022
+# https://docs.djangoproject.com/en/3.1/ref/signals/#post-save
+# https://docs.djangoproject.com/en/3.1/topics/signals/#listening-to-signals
+post_save.connect(increase_likes_count, sender=Like)
+pre_delete.connect(decrease_likes_count, sender=Like)
