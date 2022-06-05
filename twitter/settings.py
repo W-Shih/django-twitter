@@ -22,6 +22,7 @@
 # 23-Mar-2022  Wayne Shih              Add MEDIA_ROOT, DEFAULT_FILE_STORAGE, AWS-related variables
 # 30-Apr-2022  Wayne Shih              Add CACHES for memcached
 # 28-May-2022  Wayne Shih              Add redis
+# 05-Jun-2022  Wayne Shih              Only cache REDIS_LIST_SIZE_LIMIT in redis
 # $HISTORY$
 # =================================================================================================
 
@@ -228,6 +229,7 @@ REDIS_HOST = '127.0.0.1'
 REDIS_PORT = 6379
 REDIS_DB = 0 if not TESTING else 1
 REDIS_KEY_EXPIRE_TIME = 7 * 86400  # in seconds
+REDIS_LIST_SIZE_LIMIT = 200 if not TESTING else 15
 
 try:
     from .local_settings import *

@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 30-May-2022  Wayne Shih              Initial create
 # 30-May-2022  Wayne Shih              Refactor utils file structure
+# 05-Jun-2022  Wayne Shih              Only cache REDIS_LIST_SIZE_LIMIT in redis
 # $HISTORY$
 # =================================================================================================
 
@@ -23,7 +24,10 @@ class RedisHelper(object):
     @classmethod
     def _load_objects_to_cache(cls, key, queryset):
         conn = RedisClient.get_connection()
-        serialized_list = [DjangoModelSerializer.serialize(obj) for obj in queryset]
+        serialized_list = [
+            DjangoModelSerializer.serialize(obj)
+            for obj in queryset[:settings.REDIS_LIST_SIZE_LIMIT]
+        ]
         if serialized_list:
             conn.rpush(key, *serialized_list)
             conn.expire(key, settings.REDIS_KEY_EXPIRE_TIME)
@@ -46,6 +50,7 @@ class RedisHelper(object):
         conn = RedisClient.get_connection()
         if conn.exists(key):
             conn.lpush(key, DjangoModelSerializer.serialize(obj))
+            conn.ltrim(key, 0, settings.REDIS_LIST_SIZE_LIMIT - 1)
             return
 
         cls._load_objects_to_cache(key, queryset)

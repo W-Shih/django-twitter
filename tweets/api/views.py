@@ -22,6 +22,7 @@
 # 29-Apr-2022  Wayne Shih              Fix query string bug for list api
 # 29-Apr-2022  Wayne Shih              Deprecate key in tweets list api
 # 29-May-2022  Wayne Shih              React to user tweet cache
+# 05-Jun-2022  Wayne Shih              React to only caching REDIS_LIST_SIZE_LIMIT in redis
 # $HISTORY$
 # =================================================================================================
 
@@ -93,8 +94,11 @@ class TweetViewSet(viewsets.GenericViewSet):
     @required_params(params=['user_id'])
     def list(self, request: Request):
         user_id = request.query_params['user_id']
-        tweets = TweetService.get_cached_tweets(user_id, self)
-        page = self.paginate_queryset(tweets)
+        cached_tweets = TweetService.get_cached_tweets(user_id, self)
+        page = self.paginator.paginate_cached_list(cached_tweets, request)
+        if page is None:
+            tweets = self.filter_queryset(self.get_queryset()).prefetch_related('user')
+            page = self.paginate_queryset(tweets)
         serializer = TweetSerializer(page, many=True, context={'request': request})
         return self.get_paginated_response(serializer.data)
 

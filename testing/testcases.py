@@ -19,6 +19,7 @@
 # 30-Apr-2022  Wayne Shih              Add clear_cache
 # 28-May-2022  Wayne Shih              Add clear redis up
 # 30-May-2022  Wayne Shih              React to utils file structure refactor
+# 05-Jun-2022  Wayne Shih              Add create_friendship
 # $HISTORY$
 # =================================================================================================
 
@@ -30,6 +31,7 @@ from django.test import TestCase as DjangoTestCase
 from rest_framework.test import APIClient
 
 from comments.models import Comment
+from friendships.models import Friendship
 from likes.models import Like
 from newsfeeds.models import NewsFeed
 from tweets.models import Tweet
@@ -87,6 +89,9 @@ class TestCase(DjangoTestCase):
 
     def create_newsfeed(self, user, tweet):
         return NewsFeed.objects.create(user=user, tweet=tweet)
+
+    def create_friendship(self, from_user, to_user):
+        return Friendship.objects.create(from_user=from_user, to_user=to_user)
 
     def get_avator_url(self, user):
         return user.profile.avatar.url if user.profile.avatar else None

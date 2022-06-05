@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 28-May-2022  Wayne Shih              Initial create
 # 30-May-2022  Wayne Shih              Refactor utils file structure
+# 05-Jun-2022  Wayne Shih              Add comment for datetime format
 # $HISTORY$
 # =================================================================================================
 
@@ -36,6 +37,10 @@ class DjangoJSONEncoder(JSONEncoder):
     def default(self, o):
         # See "Date Time String Format" in the ECMA-262 specification.
         if isinstance(o, datetime.datetime):
+            # <Wayne Shih> 05-Jun-2022
+            # o: 2022-05-13 09:48:55.928339+00:00
+            # o.isoformat(): 2022-05-13T09:48:55.928339+00:00
+            # r: 2022-05-13T09:48:55.928339Z
             r = o.isoformat()
             # if o.microsecond:
             #     r = r[:23] + r[26:]
