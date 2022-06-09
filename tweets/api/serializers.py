@@ -21,6 +21,7 @@
 # 17-Mar-2022  Wayne Shih              Add TweetSerializerForNotifications
 # 30-Mar-2022  Wayne Shih              Add tweet photo to serializers
 # 26-May-2022  Wayne Shih              Fetch user from cache
+# 09-Jun-2022  Wayne Shih              Fetch likes_count and comments_count from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -34,6 +35,7 @@ from likes.services import LikeService
 from tweets.constants import TWEET_PHOTOS_UPLOAD_LIMIT
 from tweets.models import Tweet
 from tweets.services import TweetService
+from utils.caches.redis_helpers import RedisHelper
 
 
 class TweetSerializer(serializers.ModelSerializer):
@@ -57,10 +59,10 @@ class TweetSerializer(serializers.ModelSerializer):
         )
 
     def get_comments_count(self, obj):
-        return obj.comment_set.count()
+        return RedisHelper.get_count(obj, 'comments_count')
 
     def get_likes_count(self, obj):
-        return obj.like_set.count()
+        return RedisHelper.get_count(obj, 'likes_count')
 
     def get_has_liked(self, obj):
         return LikeService.get_has_liked(self.context['request'].user, obj)

@@ -9,6 +9,7 @@
 # 30-May-2022  Wayne Shih              Initial create
 # 30-May-2022  Wayne Shih              Refactor utils file structure
 # 05-Jun-2022  Wayne Shih              Only cache REDIS_LIST_SIZE_LIMIT in redis
+# 09-Jun-2022  Wayne Shih              Add helpers to cache and get counts
 # $HISTORY$
 # =================================================================================================
 
@@ -54,3 +55,48 @@ class RedisHelper(object):
             return
 
         cls._load_objects_to_cache(key, queryset)
+
+    @classmethod
+    def _get_key_for_count(cls, obj, attr):
+        return f'{obj.__class__.__name__}:{obj.id}:{attr}'
+
+    @classmethod
+    def _refill_count_cache_from_db(cls, key, obj, attr):
+        conn = RedisClient.get_connection()
+        obj.refresh_from_db()
+        conn.set(key, getattr(obj, attr))
+        conn.expire(key, settings.REDIS_KEY_EXPIRE_TIME)
+        return getattr(obj, attr)
+
+    @classmethod
+    def get_count(cls, obj, attr):
+        conn = RedisClient.get_connection()
+        key = cls._get_key_for_count(obj, attr)
+        if conn.exists(key):
+            return int(conn.get(key))
+
+        return cls._refill_count_cache_from_db(key, obj, attr)
+
+    @classmethod
+    def incr_count(cls, obj, attr):
+        conn = RedisClient.get_connection()
+        key = cls._get_key_for_count(obj, attr)
+        if conn.exists(key):
+            return conn.incr(key)
+
+        # <Wayne Shih> 05-Jun-2022
+        # Caller needs to guarantee that it updates the count in db itself.
+        # This helper is only responsible for the count in redis cache.
+        return cls._refill_count_cache_from_db(key, obj, attr)
+
+    @classmethod
+    def decr_count(cls, obj, attr):
+        conn = RedisClient.get_connection()
+        key = cls._get_key_for_count(obj, attr)
+        if conn.exists(key):
+            return conn.decr(key)
+
+        # <Wayne Shih> 05-Jun-2022
+        # Caller needs to guarantee that it updates the count in db itself.
+        # This helper is only responsible for the count in redis cache.
+        return cls._refill_count_cache_from_db(key, obj, attr)

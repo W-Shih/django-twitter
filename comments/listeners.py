@@ -7,8 +7,12 @@
 # =================================================================================================
 #    Date      Name                    Description of Change
 # 05-Jun-2022  Wayne Shih              Initial create
+# 09-Jun-2022  Wayne Shih              Cache reacts to comments_count change
 # $HISTORY$
 # =================================================================================================
+
+
+from utils.caches.redis_helpers import RedisHelper
 
 
 # <Wayne Shih> 05-Jun-2022
@@ -23,6 +27,7 @@ def increase_comments_count(sender, instance, created, **kwargs):
     # <Wayne Shih> 05-Jun-2022
     # https://docs.djangoproject.com/en/4.0/ref/models/expressions/#f-expressions
     Tweet.objects.filter(id=instance.tweet_id).update(comments_count=F('comments_count') + 1)
+    RedisHelper.incr_count(instance.tweet, 'comments_count')
 
 
 def decrease_comments_count(sender, instance, **kwargs):
@@ -32,3 +37,4 @@ def decrease_comments_count(sender, instance, **kwargs):
     # <Wayne Shih> 05-Jun-2022
     # https://docs.djangoproject.com/en/4.0/ref/models/expressions/#f-expressions
     Tweet.objects.filter(id=instance.tweet_id).update(comments_count=F('comments_count') - 1)
+    RedisHelper.decr_count(instance.tweet, 'comments_count')
