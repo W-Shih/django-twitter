@@ -18,6 +18,7 @@
 # 29-Apr-2022  Wayne Shih              React to deprecating key in tweets list api
 # 29-Apr-2022  Wayne Shih              React to deprecating key in newsfeeds list api
 # 26-May-2022  Wayne Shih              Add clear cache before each test
+# 09-Jun-2022  Wayne Shih              Test cached comments_count
 # $HISTORY$
 # =================================================================================================
 
@@ -344,3 +345,99 @@ class CommentApiTests(TestCase):
         response = self.kd35_client.get(NEWSFEED_LIST_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results'][0]['tweet']['comments_count'], 2)
+
+    def test_cached_comments_count(self):
+        # test TWEET_DETAIL_URL  <Wayne Shih> 09-Jun-2022
+        url = TWEET_DETAIL_URL.format(self.tweet.id)
+        response = self.kd35_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 0)
+        self.assertEqual(response.data['comments_count'], 0)
+
+        for i in range(3):
+            data = {'tweet_id': self.tweet.id, 'content': f'comment:{i}'}
+            _, client = self.create_user_and_auth_client(f'user:{i}')
+            response = client.post(COMMENT_URL, data)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            response = client.get(url)
+            self.tweet.refresh_from_db()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(self.tweet.comments_count, i + 1)
+            self.assertEqual(response.data['comments_count'], i + 1)
+
+        # test TWEET_LIST_URL  <Wayne Shih> 09-Jun-2022
+        self.kd35_client.post(COMMENT_URL, {'tweet_id': self.tweet.id, 'content': 'kd comment 1'})
+        response = self.anonymous_client.get(TWEET_LIST_URL, {
+            'user_id': self.lbj23.id
+        })
+        self.tweet.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 4)
+        self.assertEqual(response.data['results'][0]['comments_count'], 4)
+
+        # test NEWSFEED_LIST_URL  <Wayne Shih> 09-Jun-2022
+        self.create_newsfeed(self.kd35, self.tweet)
+        comment_id = self.kd35_client.post(
+            COMMENT_URL,
+            {'tweet_id': self.tweet.id, 'content': 'kd comment 2'}
+        ).data['id']
+        self.tweet.refresh_from_db()
+        response = self.kd35_client.get(NEWSFEED_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 5)
+        self.assertEqual(response.data['results'][0]['tweet']['comments_count'], 5)
+
+        # test update comment  <Wayne Shih> 09-Jun-2022
+        response = self.kd35_client.put(
+            COMMENT_DETAIL_URL.format(comment_id),
+            {'content': 'kd comment 2 - new'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.tweet.refresh_from_db()
+
+        # test TWEET_DETAIL_URL after updating comment  <Wayne Shih> 09-Jun-2022
+        response = self.kd35_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 5)
+        self.assertEqual(response.data['comments_count'], 5)
+
+        # test TWEET_LIST_URL after updating comment  <Wayne Shih> 09-Jun-2022
+        response = self.kd35_client.get(TWEET_LIST_URL, {
+            'user_id': self.lbj23.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 5)
+        self.assertEqual(response.data['results'][0]['comments_count'], 5)
+
+        # test NEWSFEED_LIST_URL after updating comment  <Wayne Shih> 09-Jun-2022
+        response = self.kd35_client.get(NEWSFEED_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 5)
+        self.assertEqual(response.data['results'][0]['tweet']['comments_count'], 5)
+
+        # test delete comment  <Wayne Shih> 09-Jun-2022
+        response = self.kd35_client.delete(COMMENT_DETAIL_URL.format(comment_id))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.tweet.refresh_from_db()
+
+        # test TWEET_DETAIL_URL after deleting comment  <Wayne Shih> 09-Jun-2022
+        response = self.kd35_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 4)
+        self.assertEqual(response.data['comments_count'], 4)
+
+        # test TWEET_LIST_URL after deleting comment  <Wayne Shih> 09-Jun-2022
+        response = self.kd35_client.get(TWEET_LIST_URL, {
+            'user_id': self.lbj23.id
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 4)
+        self.assertEqual(response.data['results'][0]['comments_count'], 4)
+
+        # <Wayne Shih> 09-Jun-2022
+        # test NEWSFEED_LIST_URL after deleting comment with cache expired
+        self.clear_cache()
+        response = self.kd35_client.get(NEWSFEED_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.tweet.comments_count, 4)
+        self.assertEqual(response.data['results'][0]['tweet']['comments_count'], 4)
