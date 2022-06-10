@@ -18,6 +18,7 @@
 # 27-May-2022  Wayne Shih              React to memcached helper
 # 30-May-2022  Wayne Shih              React to utils file structure refactor
 # 05-Jun-2022  Wayne Shih              React to tweet model denormalization for comments_count
+# 10-Jun-2022  Wayne Shih              Add denormalization for likes_count
 # $HISTORY$
 # =================================================================================================
 
@@ -48,6 +49,9 @@ class Comment(models.Model):
     content = models.CharField(max_length=140)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # <Wayne Shih> 10-Jun-2022
+    # comment model denormalization
+    likes_count = models.IntegerField(default=0, null=True)
 
     class Meta:
         index_together = (('tweet', 'created_at'),)
