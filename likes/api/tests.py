@@ -14,10 +14,12 @@
 # 29-Apr-2022  Wayne Shih              React to deprecating key in newsfeeds list api
 # 26-May-2022  Wayne Shih              Add clear cache before each test
 # 09-Jun-2022  Wayne Shih              Test cached likes_count in tweets
+# 11-Jun-2022  Wayne Shih              Test cached likes_count in comments
 # $HISTORY$
 # =================================================================================================
 
 
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 
 from likes.models import Like
@@ -292,7 +294,7 @@ class LikeApiTests(TestCase):
         # test COMMENT_LIST_URL for a given tweet
         # test anonymous
         response = self.anonymous_client.get(COMMENT_LIST_URL, {
-            'tweet_id': self.lbj23_tweet.id
+            'tweet_id': self.lbj23_tweet.id,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['comments'][0]['likes_count'], 0)
@@ -300,14 +302,14 @@ class LikeApiTests(TestCase):
 
         # test log-in user
         response = self.lbj23_client.get(COMMENT_LIST_URL, {
-            'tweet_id': self.lbj23_tweet.id
+            'tweet_id': self.lbj23_tweet.id,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['comments'][0]['has_liked'], False)
         self.assertEqual(response.data['comments'][0]['likes_count'], 0)
         self.create_like(self.lbj23, self.kd35_comment)
         response = self.lbj23_client.get(COMMENT_LIST_URL, {
-            'tweet_id': self.lbj23_tweet.id
+            'tweet_id': self.lbj23_tweet.id,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['comments'][0]['has_liked'], True)
@@ -335,7 +337,7 @@ class LikeApiTests(TestCase):
         #
         # test TWEET_LIST_URL
         response = self.anonymous_client.get(TWEET_LIST_URL, {
-            'user_id': self.lbj23.id
+            'user_id': self.lbj23.id,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results'][0]['likes_count'], 0)
@@ -343,7 +345,7 @@ class LikeApiTests(TestCase):
 
         self.create_like(self.lbj23, self.lbj23_tweet)
         response = self.lbj23_client.get(TWEET_LIST_URL, {
-            'user_id': self.lbj23.id
+            'user_id': self.lbj23.id,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results'][0]['likes_count'], 1)
@@ -352,7 +354,7 @@ class LikeApiTests(TestCase):
         # lbj re-liked the same comment
         self.create_like(self.lbj23, self.lbj23_tweet)
         response = self.kd35_client.get(TWEET_LIST_URL, {
-            'user_id': self.lbj23.id
+            'user_id': self.lbj23.id,
         })
         self.assertEqual(response.data['results'][0]['likes_count'], 1)
         self.assertEqual(response.data['results'][0]['has_liked'], False)
@@ -377,8 +379,8 @@ class LikeApiTests(TestCase):
 
     def test_cached_likes_count_in_tweets(self):
         # test TWEET_DETAIL_URL  <Wayne Shih> 09-Jun-2022
-        url = TWEET_DETAIL_URL.format(self.lbj23_tweet.id)
-        response = self.kd35_client.get(url)
+        tweet_detail_url = TWEET_DETAIL_URL.format(self.lbj23_tweet.id)
+        response = self.kd35_client.get(tweet_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['likes_count'], 0)
         self.assertEqual(self.lbj23_tweet.likes_count, 0)
@@ -390,7 +392,7 @@ class LikeApiTests(TestCase):
                 'object_id': self.lbj23_tweet.id,
             })
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-            response = client.get(url)
+            response = client.get(tweet_detail_url)
             self.lbj23_tweet.refresh_from_db()
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(response.data['likes_count'], i + 1)
@@ -403,7 +405,7 @@ class LikeApiTests(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         response = self.kd35_client.get(TWEET_LIST_URL, {
-            'user_id': self.lbj23.id
+            'user_id': self.lbj23.id,
         })
         self.lbj23_tweet.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -425,7 +427,7 @@ class LikeApiTests(TestCase):
         self.assertEqual(self.lbj23_tweet.likes_count, 4)
         self.assertEqual(response.data['results'][0]['tweet']['likes_count'], 4)
 
-        # test cancel comment with cache expired  <Wayne Shih> 09-Jun-2022
+        # test cancel like with cache expired  <Wayne Shih> 09-Jun-2022
         self.clear_cache()
         response = self.kd35_client.post(LIKE_CANCEL_URL, {
             'object_id': self.lbj23_tweet.id,
@@ -435,7 +437,7 @@ class LikeApiTests(TestCase):
         self.lbj23_tweet.refresh_from_db()
 
         # test TWEET_DETAIL_URL after canceling like  <Wayne Shih> 09-Jun-2022
-        response = self.kd35_client.get(url)
+        response = self.kd35_client.get(tweet_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['likes_count'], 3)
         self.assertEqual(self.lbj23_tweet.likes_count, 3)
@@ -449,7 +451,7 @@ class LikeApiTests(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = self.kd35_client.get(TWEET_LIST_URL, {
-            'user_id': self.lbj23.id
+            'user_id': self.lbj23.id,
         })
         self.lbj23_tweet.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -469,3 +471,116 @@ class LikeApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results'][0]['tweet']['likes_count'], 3)
         self.assertEqual(self.lbj23_tweet.likes_count, 3)
+
+    def test_cached_likes_count_in_comments(self):
+        # test COMMENT_LIST_URL for a given tweet  <Wayne Shih> 11-Jun-2022
+        response = self.anonymous_client.get(COMMENT_LIST_URL, {
+            'tweet_id': self.lbj23_tweet.id,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 0)
+
+        for i in range(3):
+            _, client = self.create_user_and_auth_client(f'user:{i}')
+            response = client.post(LIKE_BASE_URL, {
+                'content_type': 'comment',
+                'object_id': self.kd35_comment.id,
+            })
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            response = client.get(COMMENT_LIST_URL, {
+                'tweet_id': self.lbj23_tweet.id,
+            })
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data['comments'][0]['likes_count'], i + 1)
+            self.kd35_comment.refresh_from_db()
+            self.assertEqual(self.kd35_comment.likes_count, i + 1)
+
+        # <Wayne Shih> 11-Jun-2022
+        # test COMMENT_LIST_URL for a given user
+        # kd35 liked the comment
+        response = self.lbj23_client.post(LIKE_BASE_URL, {
+            'object_id': self.kd35_comment.id,
+            'content_type': 'comment',
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        like = Like.objects.filter(
+            user_id=self.lbj23.id,
+            content_type=ContentType.objects.get_for_model(self.kd35_comment.__class__),
+            object_id=self.kd35_comment.id,
+        ).first()
+        like.user_id = self.kd35.id
+        like.save()
+        self.kd35_comment.refresh_from_db()
+        self.assertEqual(self.kd35_comment.likes_count, 4)
+
+        response = client.get(COMMENT_LIST_URL, {
+            'user_id': self.kd35.id,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 4)
+
+        # <Wayne Shih> 11-Jun-2022
+        # test TWEET_DETAIL_URL with cache expired after kd35 liked the comment
+        self.clear_cache()
+        tweet_detail_url = TWEET_DETAIL_URL.format(self.lbj23_tweet.id)
+        response = self.kd35_client.get(tweet_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 4)
+
+        # <Wayne Shih> 11-Jun-2022
+        # test COMMENT_LIST_URL for a given user and a given tweet
+        # after kd35 liked the comment
+        response = self.kd35_client.post(LIKE_BASE_URL, {
+            'object_id': self.kd35_comment.id,
+            'content_type': 'comment',
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.kd35_comment.refresh_from_db()
+        self.assertEqual(self.kd35_comment.likes_count, 4)
+        response = client.get(COMMENT_LIST_URL, {
+            'user_id': self.kd35.id,
+            'tweet_id': self.lbj23_tweet.id,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 4)
+
+        # test TWEET_DETAIL_URL after kd35 liked the comment  <Wayne Shih> 11-Jun-2022
+        response = self.kd35_client.get(tweet_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 4)
+
+        # <Wayne Shih> 11-Jun-2022
+        # test cancel like
+        # kd35 canceled the like on the comment
+        response = self.kd35_client.post(LIKE_CANCEL_URL, {
+            'content_type': 'comment',
+            'object_id': self.kd35_comment.id,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.kd35_comment.refresh_from_db()
+        self.assertEqual(self.kd35_comment.likes_count, 3)
+
+        # <Wayne Shih> 11-Jun-2022
+        # test COMMENT_LIST_URL for a given user and a given tweet after canceling like
+        response = client.get(COMMENT_LIST_URL, {
+            'tweet_id': self.lbj23_tweet.id,
+            'user_id': self.kd35.id,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 3)
+
+        # <Wayne Shih> 11-Jun-2022
+        # test cancel like
+        # kd35 canceled the like the comment again
+        response = self.kd35_client.post(LIKE_CANCEL_URL, {
+            'content_type': 'comment',
+            'object_id': self.kd35_comment.id,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.kd35_comment.refresh_from_db()
+        self.assertEqual(self.kd35_comment.likes_count, 3)
+
+        # test TWEET_DETAIL_URL after canceling like again  <Wayne Shih> 11-Jun-2022
+        response = self.kd35_client.get(tweet_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['comments'][0]['likes_count'], 3)
