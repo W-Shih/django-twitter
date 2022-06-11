@@ -19,6 +19,7 @@
 # 12-Mar-2022  Wayne Shih              Insert likes_count and has_liked to comment serializer
 # 17-Mar-2022  Wayne Shih              Add CommentSerializerForNotifications
 # 26-May-2022  Wayne Shih              Fetch user from cache
+# 11-Jun-2022  Wayne Shih              Fetch likes_count from cache
 # $HISTORY$
 # =================================================================================================
 
@@ -29,6 +30,7 @@ from accounts.api.serializers import UserSerializerForComment
 from comments.models import Comment
 from likes.services import LikeService
 from tweets.models import Tweet
+from utils.caches.redis_helpers import RedisHelper
 
 
 class DefaultCommentSerializer(serializers.Serializer):
@@ -53,7 +55,7 @@ class CommentSerializer(serializers.ModelSerializer):
         )
 
     def get_likes_count(self, obj):
-        return obj.like_set.count()
+        return RedisHelper.get_count(obj, 'likes_count')
 
     def get_has_liked(self, obj):
         return LikeService.get_has_liked(self.context['request'].user, obj)
