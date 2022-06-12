@@ -23,6 +23,7 @@
 # 30-Apr-2022  Wayne Shih              Add CACHES for memcached
 # 28-May-2022  Wayne Shih              Add redis
 # 05-Jun-2022  Wayne Shih              Only cache REDIS_LIST_SIZE_LIMIT in redis
+# 12-Jun-2022  Wayne Shih              Add celery settings and use redis as MQ broker, fix lint
 # $HISTORY$
 # =================================================================================================
 
@@ -227,11 +228,32 @@ CACHES = {
 # https://redis.io/docs/getting-started/
 REDIS_HOST = '127.0.0.1'
 REDIS_PORT = 6379
-REDIS_DB = 0 if not TESTING else 1
+REDIS_DB = 1 if not TESTING else 0
 REDIS_KEY_EXPIRE_TIME = 7 * 86400  # in seconds
 REDIS_LIST_SIZE_LIMIT = 200 if not TESTING else 15
 
+# <Wayne Shih> 11-Jun-2022
+# Celery Configuration Options
+# https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html#id1
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html
+# https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/redis.html#broker-redis
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-settings
+#
+# Starting the worker process, which can be on different machine, by the following command
+# $ celery -A <proj> worker -l INFO
+# https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html#starting-the-worker-process
+#
+# Testing with Celery
+# https://docs.celeryq.dev/en/stable/userguide/testing.html
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#std-setting-task_always_eager
+#
+# Example
+# https://github.com/celery/celery/blob/master/examples/django/proj/settings.py
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/2' if not TESTING else 'redis://127.0.0.1:6379/0'
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_ALWAYS_EAGER = TESTING
+
 try:
     from .local_settings import *
-except:
+except ModuleNotFoundError:
     pass

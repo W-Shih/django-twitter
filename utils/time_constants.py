@@ -2,8 +2,7 @@
 #                                  All Rights Reserved.
 # =================================================================================================
 # File description:
-#     Initial celery
-#       - https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html
+#     Define time constants
 #
 # =================================================================================================
 #    Date      Name                    Description of Change
@@ -12,8 +11,7 @@
 # =================================================================================================
 
 
-# This will make sure the app is always imported when
-# Django starts so that shared_task will use this app.
-from .celery import app as celery_app
-
-__all__ = ('celery_app',)
+# <Wayne Shih> 12-Jun-2022
+# celery time_limit is in second
+# https://docs.celeryq.dev/en/stable/userguide/tasks.html#Task.time_limit
+ONE_HOUR = 60 * 60 * 60
