@@ -23,7 +23,7 @@
 # 30-Apr-2022  Wayne Shih              Add CACHES for memcached
 # 28-May-2022  Wayne Shih              Add redis
 # 05-Jun-2022  Wayne Shih              Only cache REDIS_LIST_SIZE_LIMIT in redis
-# 12-Jun-2022  Wayne Shih              Add celery settings and use redis as MQ broker
+# 12-Jun-2022  Wayne Shih              Add celery settings and use redis as MQ broker, fix lint
 # $HISTORY$
 # =================================================================================================
 
@@ -255,5 +255,5 @@ CELERY_TASK_ALWAYS_EAGER = TESTING
 
 try:
     from .local_settings import *
-except:
+except ModuleNotFoundError:
     pass
