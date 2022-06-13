@@ -24,6 +24,7 @@
 # 28-May-2022  Wayne Shih              Add redis
 # 05-Jun-2022  Wayne Shih              Only cache REDIS_LIST_SIZE_LIMIT in redis
 # 12-Jun-2022  Wayne Shih              Add celery settings and use redis as MQ broker, fix lint
+# 12-Jun-2022  Wayne Shih              Add CELERY_QUEUES for routing tasks
 # $HISTORY$
 # =================================================================================================
 
@@ -43,6 +44,8 @@ import os
 import sys
 
 from pathlib import Path
+
+from kombu import Queue
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -252,6 +255,15 @@ REDIS_LIST_SIZE_LIMIT = 200 if not TESTING else 15
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/2' if not TESTING else 'redis://127.0.0.1:6379/0'
 CELERY_TIMEZONE = 'UTC'
 CELERY_TASK_ALWAYS_EAGER = TESTING
+# <Wayne Shih> 12-Jun-2022
+# Celery task queues
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#std-setting-task_queues
+# https://docs.celeryq.dev/projects/kombu/en/master/reference/kombu.html#kombu.Queue
+# https://docs.celeryq.dev/en/stable/userguide/routing.html#id2
+CELERY_QUEUES = (
+    Queue('default', routing_key='default'),
+    Queue('newsfeeds', routing_key='newsfeeds'),
+)
 
 try:
     from .local_settings import *
