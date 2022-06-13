@@ -7,15 +7,18 @@
 # 17-Oct-2021  Wayne Shih              Initial create
 # 05-Nov-2021  Wayne Shih              Fix typo
 # 26-May-2022  Wayne Shih              Add clear cache before each test
-# 30-May-2022  Wayne Shih              Add tests to user newsfeeds cache, react to utils file structure refactor
+# 30-May-2022  Wayne Shih              Test user newsfeeds cache, react to utils file structure refactor
+# 12-Jun-2022  Wayne Shih              Add tests for fanout_newsfeeds_main_task()
 # $HISTORY$
 # =================================================================================================
 
 
 import re
 
+from newsfeeds.constants import FANOUT_BATCH_SIZE
 from newsfeeds.models import NewsFeed
 from newsfeeds.services import NewsFeedService
+from newsfeeds.tasks import fanout_newsfeeds_main_task
 from testing.testcases import TestCase
 from twitter.caches import USER_NEWSFEEDS_PATTERN
 from utils.caches.redis_client import RedisClient
@@ -25,7 +28,6 @@ class NewsfeedTests(TestCase):
 
     def setUp(self):
         self.clear_cache()
-
         self.user = self.create_user(username='cavs_lbj23')
         self.tweet = self.create_tweet(user=self.user, content='This is for u!')
         self.newsfeed = NewsFeed.objects.create(
@@ -148,3 +150,43 @@ class NewsfeedCacheTests(TestCase):
         kd35_newsfeeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
         self.assertEqual([feed.id for feed in kd35_newsfeeds], newsfeed_ids)
         self.assertEqual(type(kd35_newsfeeds), list)
+
+
+class NewsfeedTaskTests(TestCase):
+
+    def setUp(self):
+        self.clear_cache()
+
+        self.lbj23, self.lbj23_client = self.create_user_and_auth_client(username='lbj23')
+        self.kd35, self.kd35_client = self.create_user_and_auth_client(username='kd35')
+        self.create_friendship(self.kd35, self.lbj23)
+
+    def test_fanout_main_task(self):
+        expected_msg = '{num_batches} batches created, going to fanout {num_newsfeeds} newsfeeds.'
+        cached_kd35_feeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
+        self.assertEqual(len(cached_kd35_feeds), 0)
+        self.assertEqual(NewsFeed.objects.count(), 0)
+
+        self.lbj23_tweet1 = self.create_tweet(self.lbj23, 'I am coming home!!')
+        msg = fanout_newsfeeds_main_task(self.lbj23_tweet1.id, self.lbj23.id)
+        cached_kd35_feeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
+        self.assertEqual(len(cached_kd35_feeds), 1)
+        # <Wayne Shih> 12-Jun-2022
+        # Note that fanout_newsfeeds_main_task() is not responsible for fanouting the newsfeed to
+        # the twitter user itself. fanout_newsfeeds_main_task() only fanouts the newsfeed to the
+        # user's followers.
+        self.assertEqual(NewsFeed.objects.count(), 1)
+        self.assertEqual(msg, expected_msg.format(num_batches=1, num_newsfeeds=1))
+
+        for i in range(FANOUT_BATCH_SIZE):
+            user = self.create_user(f'user:{i}')
+            self.create_friendship(user, self.lbj23)
+        self.lbj23_tweet2 = self.create_tweet(self.lbj23, 'This is for u!!')
+        msg = fanout_newsfeeds_main_task(self.lbj23_tweet2.id, self.lbj23.id)
+        cached_kd35_feeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
+        self.assertEqual(len(cached_kd35_feeds), 2)
+        self.assertEqual(NewsFeed.objects.count(), 1 + (1 + FANOUT_BATCH_SIZE))
+        self.assertEqual(msg, expected_msg.format(
+            num_batches=2,
+            num_newsfeeds=1 + FANOUT_BATCH_SIZE,
+        ))
