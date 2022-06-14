@@ -9,6 +9,7 @@
 # 26-May-2022  Wayne Shih              Add clear cache before each test
 # 30-May-2022  Wayne Shih              Test user newsfeeds cache, react to utils file structure refactor
 # 12-Jun-2022  Wayne Shih              Add tests for fanout_newsfeeds_main_task()
+# 14-Jun-2022  Wayne Shih              Test fanout log
 # $HISTORY$
 # =================================================================================================
 
@@ -157,8 +158,8 @@ class NewsfeedTaskTests(TestCase):
     def setUp(self):
         self.clear_cache()
 
-        self.lbj23, self.lbj23_client = self.create_user_and_auth_client(username='lbj23')
-        self.kd35, self.kd35_client = self.create_user_and_auth_client(username='kd35')
+        self.lbj23 = self.create_user(username='lbj23')
+        self.kd35 = self.create_user(username='kd35')
         self.create_friendship(self.kd35, self.lbj23)
 
     def test_fanout_main_task(self):
@@ -178,15 +179,31 @@ class NewsfeedTaskTests(TestCase):
         self.assertEqual(NewsFeed.objects.count(), 1)
         self.assertEqual(msg, expected_msg.format(num_batches=1, num_newsfeeds=1))
 
-        for i in range(FANOUT_BATCH_SIZE):
+        for i in range(FANOUT_BATCH_SIZE - 1):
             user = self.create_user(f'user:{i}')
             self.create_friendship(user, self.lbj23)
         self.lbj23_tweet2 = self.create_tweet(self.lbj23, 'This is for u!!')
         msg = fanout_newsfeeds_main_task(self.lbj23_tweet2.id, self.lbj23.id)
         cached_kd35_feeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
         self.assertEqual(len(cached_kd35_feeds), 2)
-        self.assertEqual(NewsFeed.objects.count(), 1 + (1 + FANOUT_BATCH_SIZE))
+        self.assertEqual(NewsFeed.objects.count(), 1 + FANOUT_BATCH_SIZE)
+        self.assertEqual(msg, expected_msg.format(
+            num_batches=1,
+            num_newsfeeds=FANOUT_BATCH_SIZE,
+        ))
+
+        curry30 = self.create_user(username='curry30')
+        self.create_friendship(curry30, self.lbj23)
+        self.lbj23_tweet3 = self.create_tweet(self.lbj23, 'Believeland')
+        msg = fanout_newsfeeds_main_task(self.lbj23_tweet3.id, self.lbj23.id)
+        cached_kd35_feeds = NewsFeedService.get_cached_newsfeeds(self.kd35.id)
+        self.clear_cache()
+        cached_curry30_feeds = NewsFeedService.get_cached_newsfeeds(curry30.id)
+        self.assertEqual(len(cached_kd35_feeds), 3)
+        self.assertEqual(len(cached_curry30_feeds), 1)
+        self.assertEqual(NewsFeed.objects.count(), 1 + FANOUT_BATCH_SIZE + (FANOUT_BATCH_SIZE + 1))
         self.assertEqual(msg, expected_msg.format(
             num_batches=2,
-            num_newsfeeds=1 + FANOUT_BATCH_SIZE,
+            num_newsfeeds=FANOUT_BATCH_SIZE + 1,
         ))
+
