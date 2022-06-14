@@ -10,9 +10,12 @@
 #    Date      Name                    Description of Change
 # 12-Jun-2022  Wayne Shih              Initial create
 # 12-Jun-2022  Wayne Shih              Make fanout robust
+# 14-Jun-2022  Wayne Shih              Fix fanout log
 # $HISTORY$
 # =================================================================================================
 
+
+import math
 
 from celery import shared_task
 
@@ -30,7 +33,7 @@ def fanout_newsfeeds_main_task(tweet_id, tweet_user_id):
         fanout_newsfeeds_batch_task.delay(tweet_id, follower_ids[batch_from:batch_end])
         batch_from, batch_end = batch_end, batch_end + FANOUT_BATCH_SIZE
 
-    return f'{len(follower_ids) // FANOUT_BATCH_SIZE + 1} batches created, '\
+    return f'{math.ceil(len(follower_ids) / FANOUT_BATCH_SIZE)} batches created, '\
            f'going to fanout {len(follower_ids)} newsfeeds.'
 
 
