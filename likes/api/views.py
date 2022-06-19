@@ -12,10 +12,13 @@
 # 26-Feb-2022  Wayne Shih              Initial create
 # 05-Mar-2022  Wayne Shih              Add like cancel and list APIs
 # 12-Mar-2022  Wayne Shih              Trigger notification when create a like
+# 18-Jun-2022  Wayne Shih              Add ratelimit
 # $HISTORY$
 # =================================================================================================
 
 
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -60,6 +63,7 @@ class LikeViewSet(viewsets.GenericViewSet):
     # URL:
     # - POST /api/likes/
     @required_params(method='POST', params=['content_type', 'object_id'])
+    @method_decorator(ratelimit(key='user_or_ip', rate='10/s', method='POST', block=True))
     def create(self, request: Request):
         serializer = LikeSerializerForCreate(
             data=request.data,
@@ -82,6 +86,7 @@ class LikeViewSet(viewsets.GenericViewSet):
     # - POST /api/likes/cancel/
     @action(methods=['POST'], detail=False)
     @required_params(method='POST', params=['content_type', 'object_id'])
+    @method_decorator(ratelimit(key='user_or_ip', rate='10/s', method='POST', block=True))
     def cancel(self, request: Request):
         serializer = LikeSerializerForCancel(
             data=request.data,

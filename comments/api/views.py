@@ -21,12 +21,15 @@
 # 12-Mar-2022  Wayne Shih              React to serializer changes
 # 12-Mar-2022  Wayne Shih              Trigger notification when create a comment
 # 19-Mar-2022  Wayne Shih              React to permissions.py refactor
+# 18-Jun-2022  Wayne Shih              Add ratelimit
 # $HISTORY$
 # =================================================================================================
 
 
 import django_filters
 
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.request import Request
@@ -77,11 +80,17 @@ class CommentViewSet(viewsets.GenericViewSet):
     # <Wayne Shih> 25-Nov-2021
     # django-filter
     # - https://www.django-rest-framework.org/api-guide/filtering/
+    # <Wayne Shih> 18-Jun-2022
+    # django-ratelimit
+    # - https://django-ratelimit.readthedocs.io/en/stable/usage.html#class-based-views
+    # - https://django-ratelimit.readthedocs.io/en/stable/usage.html#exceptions
+    # - https://django-ratelimit.readthedocs.io/en/stable/keys.html#common-keys
     #
     # URL:
     # - GET /api/comments/?tweet_id=1 -> Get all comments related to a given tweet
     # - GET /api/comments/?user_id=1 -> Get all comments related to a given user
     @required_params(params=['tweet_id', 'user_id'], is_required_all=False)
+    @method_decorator(ratelimit(key='user_or_ip', rate='5/s', method='GET', block=True))
     def list(self, request: Request):
         queryset = self.get_queryset()
         # <Wayne Shih> 25-Nov-2021
@@ -103,6 +112,7 @@ class CommentViewSet(viewsets.GenericViewSet):
     # URL:
     # - POST /api/comments/
     @required_params(method='POST', params=['tweet_id', 'content'])
+    @method_decorator(ratelimit(key='user', rate='3/s', method='POST', block=True))
     def create(self, request: Request):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
@@ -122,6 +132,7 @@ class CommentViewSet(viewsets.GenericViewSet):
     # <Wayne Shih> 08-Nov-2021
     # URL:
     # - DELETE /api/comments/{pk}/
+    @method_decorator(ratelimit(key='user', rate='3/s', method='DELETE', block=True))
     def destroy(self, request: Request, *args, **kwargs):
         comment = self.get_object()
         num_deleted, _ = comment.delete()
@@ -134,6 +145,7 @@ class CommentViewSet(viewsets.GenericViewSet):
     # - PUT /api/comments/{pk}/
     # Typically use PUT to perform partial update.
     @required_params(method='PUT', params=['content'])
+    @method_decorator(ratelimit(key='user', rate='5/s', method='PUT', block=True))
     def update(self, request, *args, **kwargs):
         comment = self.get_object()
         data = {'content': request.data.get('content')}

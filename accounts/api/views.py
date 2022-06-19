@@ -17,6 +17,7 @@
 # 27-Feb-2021  Wayne Shih              Enhance account api by decorator and GenericViewSet
 # 23-Mar-2022  Wayne Shih              Add UserProfileViewSet, update UserViewSet only for superuser
 # 30-Mar-2022  Wayne Shih              Fix typo
+# 18-Jun-2022  Wayne Shih              Add ratelimit
 # $HISTORY$
 # =================================================================================================
 
@@ -27,6 +28,8 @@ from django.contrib.auth import (
     logout as django_logout,
 )
 from django.contrib.auth.models import User
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -107,6 +110,7 @@ class AccountViewSet(viewsets.GenericViewSet):
     # - methods refer to a list of http actions that allow
     #   If an http action is not on the list, then it will return 405 - 'Method Not Allowed'
     @action(methods=['GET'], detail=False)
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='GET', block=True))
     def login_status(self, request):
         """
         Check current login status
@@ -137,6 +141,7 @@ class AccountViewSet(viewsets.GenericViewSet):
     # Ref: https://docs.djangoproject.com/en/3.0/topics/auth/default/#django.contrib.auth.logout
     @action(methods=['POST'], detail=False)
     @required_params(method='POST')
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='POST', block=True))
     def logout(self, request):
         """
         Logout current user
@@ -151,6 +156,7 @@ class AccountViewSet(viewsets.GenericViewSet):
     # - https://docs.djangoproject.com/en/3.2/ref/contrib/auth/#attributes
     @action(methods=['POST'], detail=False)
     @required_params(method='POST', params=['username', 'password'])
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='POST', block=True))
     def login(self, request):
         """
         Login
@@ -215,6 +221,7 @@ class AccountViewSet(viewsets.GenericViewSet):
 
     @action(methods=['POST'], detail=False)
     @required_params(method='POST', params=['username', 'password'])
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='POST', block=True))
     def signup(self, request):
         """
         Give username, email, password to sign up a new user
@@ -271,6 +278,7 @@ class UserProfileViewSet(viewsets.GenericViewSet):
     # - PUT /api/profiles/{pk}/
     # Typically use PUT to perform partial update.
     @required_params(method='PUT', params=['nickname', 'avatar'], is_required_all=False)
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='GET', block=True))
     def update(self, request, *args, **kwargs):
         profile = self.get_object()
         serializer = self.get_serializer(instance=profile, data=request.data)
