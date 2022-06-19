@@ -23,11 +23,15 @@
 # 29-Apr-2022  Wayne Shih              Deprecate key in tweets list api
 # 29-May-2022  Wayne Shih              React to user tweet cache
 # 05-Jun-2022  Wayne Shih              React to only caching REDIS_LIST_SIZE_LIMIT in redis
+# 18-Jun-2022  Wayne Shih              Add ratelimit
 # $HISTORY$
 # =================================================================================================
 
 
 import django_filters
+
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
 
 from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -79,6 +83,7 @@ class TweetViewSet(viewsets.GenericViewSet):
     # <Wayne Shih> 26-Nov-2021
     # URL:
     # - GET /api/tweets/{pk}/
+    @method_decorator(ratelimit(key='user_or_ip', rate='5/s', method='GET', block=True))
     def retrieve(self, request: Request, *args, **kwargs):
         tweet = self.get_object()
         serializer = TweetSerializerForDetail(tweet, context={'request': request})
@@ -92,6 +97,7 @@ class TweetViewSet(viewsets.GenericViewSet):
     # - https://www.django-rest-framework.org/api-guide/viewsets/#genericviewset
     # - https://www.django-rest-framework.org/api-guide/viewsets/#example
     @required_params(params=['user_id'])
+    @method_decorator(ratelimit(key='user_or_ip', rate='5/s', method='GET', block=True))
     def list(self, request: Request):
         user_id = request.query_params['user_id']
         cached_tweets = TweetService.get_cached_tweets(user_id, self)
@@ -106,6 +112,8 @@ class TweetViewSet(viewsets.GenericViewSet):
     # URL:
     # - POST /api/tweets/
     @required_params(method='POST', params=['content'])
+    @method_decorator(ratelimit(key='user_or_ip', rate='1/s', method='POST', block=True))
+    @method_decorator(ratelimit(key='user_or_ip', rate='5/m', method='POST', block=True))
     def create(self, request: Request):
         serializer = TweetSerializerForCreate(data=request.data, context={'request': request})
         if not serializer.is_valid():

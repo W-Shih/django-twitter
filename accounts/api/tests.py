@@ -13,10 +13,12 @@
 # 20-Mar-2022  Wayne Shih              Add a test for UserProfile model
 # 23-Mar-2022  Wayne Shih              Add tests for UserProfile & User APIs, react to serializer change
 # 26-May-2022  Wayne Shih              Add clear cache before each test
+# 18-Jun-2022  Wayne Shih              Add a test for ratelimit
 # $HISTORY$
 # =================================================================================================
 
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
@@ -261,6 +263,19 @@ class AccountApiTests(TestCase):
         response = self.client.get(LOGIN_STATUS_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['has_logged_in'], True)
+
+    def test_ratelimit(self):
+        if settings.TESTING:
+            settings.RATELIMIT_ENABLE = True
+
+            self.client.get(LOGIN_STATUS_URL)
+            self.client.get(LOGIN_STATUS_URL)
+            self.client.get(LOGIN_STATUS_URL)
+            response = self.client.get(LOGIN_STATUS_URL)
+            self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+            self.assertEqual(response.data['detail'], 'Request was throttled.')
+
+            settings.RATELIMIT_ENABLE = False
 
 
 class UserApiTests(TestCase):

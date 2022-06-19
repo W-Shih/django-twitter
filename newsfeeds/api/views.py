@@ -15,10 +15,13 @@
 # 29-Apr-2022  Wayne Shih              Deprecate key in newsfeeds list api
 # 30-May-2022  Wayne Shih              React to user newsfeeds cache
 # 05-Jun-2022  Wayne Shih              React to only caching REDIS_LIST_SIZE_LIMIT in redis
+# 18-Jun-2022  Wayne Shih              Add ratelimit
 # $HISTORY$
 # =================================================================================================
 
 
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
@@ -40,6 +43,7 @@ class NewsFeedViewSet(viewsets.GenericViewSet):
     # @action(methods=['GET'], detail=False)
     # - To use @action, must specify detail
     # - @action can't apply on key word methods - list/retrieve/create/update/destroy
+    @method_decorator(ratelimit(key='user_or_ip', rate='5/s', method='GET', block=True))
     def list(self, request):
         cached_newsfeeds = NewsFeedService.get_cached_newsfeeds(request.user.id)
         page = self.paginator.paginate_cached_list(cached_newsfeeds, request)

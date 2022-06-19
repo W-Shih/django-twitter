@@ -15,11 +15,14 @@
 # 02-Apr-2022  Wayne Shih              Add friendships pagination
 # 03-Apr-2022  Wayne Shih              React to adding has_followed
 # 03-Apr-2022  Wayne Shih              Deprecate keys in friendships apis, fix typo
+# 18-Jun-2022  Wayne Shih              Add ratelimit
 # $HISTORY$
 # =================================================================================================
 
 
 from django.contrib.auth.models import User
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -64,6 +67,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         }, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='GET', block=True))
     def followers(self, request, pk):
         to_user = self.get_object()
         followers = Friendship.objects.filter(to_user_id=to_user.id).order_by('-created_at')
@@ -74,6 +78,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         return self.get_paginated_response(serializer.data)
 
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='GET', block=True))
     def followings(self, request, pk):
         from_user = self.get_object()
         followings = Friendship.objects.filter(from_user_id=from_user.id).order_by('-created_at')
@@ -82,6 +87,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         return self.get_paginated_response(serializer.data)
 
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
+    @method_decorator(ratelimit(key='user_or_ip', rate='5/s', method='POST', block=True))
     def follow(self, request: Request, pk):
         to_user = self.get_object()
         from_user = request.user
@@ -113,6 +119,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         }, status=status.HTTP_201_CREATED)
 
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
+    @method_decorator(ratelimit(key='user_or_ip', rate='5/s', method='POST', block=True))
     def unfollow(self, request: Request, pk):
         to_user = self.get_object()
         from_user = request.user

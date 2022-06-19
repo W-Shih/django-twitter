@@ -12,11 +12,14 @@
 # 13-Mar-2022  Wayne Shih              Initial create
 # 19-Mar-2022  Wayne Shih              Add notifications update api
 # 19-Mar-2022  Wayne Shih              Update notifications list api by ListModelMixin
+# 18-Jun-2022  Wayne Shih              Add ratelimit
 # $HISTORY$
 # =================================================================================================
 
 
+from django.utils.decorators import method_decorator
 from notifications.models import Notification
+from ratelimit.decorators import ratelimit
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -65,6 +68,7 @@ class NotificationViewSet(
     # - PUT /api/notifications/{pk}/
     # Typically use PUT to perform partial update.
     @required_params(method='PUT', params=['unread'])
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='PUT', block=True))
     def update(self, request, *args, **kwargs):
         notification = self.get_object()
         serializer = self.get_serializer(instance=notification, data=request.data)
@@ -85,6 +89,7 @@ class NotificationViewSet(
     # URL:
     # - GET /api/notifications/unread-count/
     @action(methods=['GET'], detail=False, url_path='unread-count')
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='GET', block=True))
     def unread_count(self, request: Request):
         queryset = self.get_queryset()
         unread_count = queryset.filter(unread=True).count()
@@ -94,6 +99,7 @@ class NotificationViewSet(
     # URL:
     # - POST /api/notifications/mark-all-as-read/
     @action(methods=['POST'], detail=False, url_path='mark-all-as-read')
+    @method_decorator(ratelimit(key='user_or_ip', rate='3/s', method='POST', block=True))
     def mark_all_as_read(self, request: Request):
         queryset = self.get_queryset()
         # <Wayne Shih> 13-Mar-2022

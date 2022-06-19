@@ -25,6 +25,7 @@
 # 05-Jun-2022  Wayne Shih              Only cache REDIS_LIST_SIZE_LIMIT in redis
 # 12-Jun-2022  Wayne Shih              Add celery settings and use redis as MQ broker, fix lint
 # 12-Jun-2022  Wayne Shih              Add CELERY_QUEUES for routing tasks
+# 18-Jun-2022  Wayne Shih              Add settings for ratelimits
 # $HISTORY$
 # =================================================================================================
 
@@ -96,12 +97,15 @@ INSTALLED_APPS = [
     'inbox',
 ]
 
+# <Wayne Shih> 18-Jun-2022
+# https://www.django-rest-framework.org/api-guide/exceptions/#custom-exception-handling
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
+    'EXCEPTION_HANDLER': 'utils.ratelimit.exception_handler',
 }
 
 MIDDLEWARE = [
@@ -225,6 +229,12 @@ CACHES = {
         'TIMEOUT': 86400,
         'KEY_PREFIX': 'testing:',
     },
+    'ratelimit': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 86400 * 7,
+        'KEY_PREFIX': 'rl:',
+    },
 }
 
 # <Wayne Shih> 28-May-2022
@@ -264,6 +274,14 @@ CELERY_QUEUES = (
     Queue('default', routing_key='default'),
     Queue('newsfeeds', routing_key='newsfeeds'),
 )
+
+# <Wayne Shih> 18-Jun-2022
+# Rate Limit
+# https://django-ratelimit.readthedocs.io/en/stable/settings.html#
+RATELIMIT_ENABLE = not TESTING
+RATELIMIT_USE_CACHE = 'ratelimit'
+RATELIMIT_CACHE_PREFIX = 'rl:'
+
 
 try:
     from .local_settings import *

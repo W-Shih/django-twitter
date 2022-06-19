@@ -23,6 +23,7 @@
 # 26-May-2022  Wayne Shih              Add clear cache before each test
 # 29-May-2022  Wayne Shih              Add tests for user tweets cache
 # 30-May-2022  Wayne Shih              React to utils file structure refactor
+# 18-Jun-2022  Wayne Shih              Add a test for ratelimit
 # $HISTORY$
 # =================================================================================================
 
@@ -30,6 +31,7 @@
 from datetime import timedelta
 from urllib import parse
 
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -528,3 +530,19 @@ class TweetApiTests(TestCase):
         for i in range(len(tweets)):
             self.assertEqual(response.data['results'][i]['id'], tweets[i].id)
         self.assertEqual(conn.exists(key_kb24), True)
+
+    def test_ratelimit(self):
+        if settings.TESTING:
+            settings.RATELIMIT_ENABLE = True
+
+            for i in range(5):
+                self.user1_client.post(TWEET_CREATE_URL, {
+                    'content': f'I am the King James! - {i}'
+                })
+            response = self.user1_client.post(TWEET_CREATE_URL, {
+                'content': 'I am the King James!'
+            })
+            self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+            self.assertEqual(response.data['detail'], 'Request was throttled.')
+
+            settings.RATELIMIT_ENABLE = False
