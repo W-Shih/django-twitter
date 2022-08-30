@@ -8,6 +8,7 @@
 #    Date      Name                    Description of Change
 # 02-Aug-2021  Wayne Shih              Initial create
 # 05-Aug-2021  Wayne Shih              Create superuser
+# 30-Aug-2022  Wayne Shih              Add memcached and redis
 # $HISTORY$
 # =================================================================================================
 
@@ -80,7 +81,7 @@ if not User.objects.filter(username=username).exists():
 else:
 	print( 'Superuser creation skipped.' );
 "
-printf " $script"  | python manage.py shell
+printf "$script" | python manage.py shell
 
 
 # 如果想直接进入 /vagrant 路径下
@@ -89,5 +90,19 @@ printf " $script"  | python manage.py shell
 # 输入 ls -a
 # 输入 vi .bashrc
 # 在最下面，添加cd /vagrant
+
+if [ ! -f "/usr/bin/memcached" ]; then
+  echo "memcached is installing..."
+  sudo apt-get install -y memcached
+else
+  echo "memcached 已安装"
+fi
+
+if [ ! -f "/usr/bin/redis-server" ]; then
+  echo "redis is installing..."
+  sudo apt-get install -y redis
+else
+  echo "redis 已安装"
+fi
 
 echo 'All Done!'
