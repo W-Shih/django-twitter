@@ -11,6 +11,7 @@ File description:
 06-Nov-2021  Wayne Shih              Add pylint badge
 18-Jun-2022  Wayne Shih              Update pylint score
 30-Aug-2022  Wayne Shih              Add doc on how to run on local machine
+31-Aug-2022  Wayne Shih              Fix typo and format
 $HISTORY$
 ================================================================================================-->
 
@@ -49,6 +50,7 @@ $HISTORY$
   ```
 
 - Prepare `local_settings.py`
+
   The simplest way is to use `./twitter/local_settings.example.py` as the template. However, you need to set up your own `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` so that users are able to upload their avatars to [Amazon S3](https://aws.amazon.com/s3/).
 
   ```bash
@@ -91,7 +93,8 @@ $HISTORY$
     ```
 
   - Method 2 - create superuser by `provision.sh`
-    `provision.sh` already has the script to create superuser, so could simply run the following:
+
+    `provision.sh` already has the script to create superuser, so could simply run the following in the host machine:
 
     ```bash
     $ vagrant provision
@@ -123,13 +126,14 @@ Now you are all set. You should be able to run this service on your machine.
   ```
 
 - Check MySQL's initialization
+
   The default password for MySQL was `yourpassword` set up by `provision.sh`. Please refer to `provision.sh` for details.
 
   ```bash
   $ mysql -uroot -p
   ```
 
-  ```sql
+  ```bash
   mysql> show databases;
   +--------------------+
   | Database           |
@@ -142,7 +146,7 @@ Now you are all set. You should be able to run this service on your machine.
   +--------------------+
   ```
 
-  ```sql
+  ```bash
   mysql> use twitter;
   mysql> show tables;
   +----------------------------+
@@ -172,9 +176,9 @@ Now you are all set. You should be able to run this service on your machine.
 - Run the service
   - Start the service on your local machine
 
-    ```json
+    ```bash
     $ python manage.py runserver 0.0.0.0:8000
     ```
 
   - Access [**http://localhost/**](http://localhost/) for twitter-backend APIs
-  - Access [**http://localhost/admin/**](http://localhost/) for Django-twitter administration
+  - Access [**http://localhost/admin/**](http://localhost/admin/) for Django-twitter administration
