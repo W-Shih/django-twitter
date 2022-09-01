@@ -12,6 +12,7 @@ File description:
 18-Jun-2022  Wayne Shih              Update pylint score
 30-Aug-2022  Wayne Shih              Add doc on how to run on local machine
 31-Aug-2022  Wayne Shih              Fix typo and format
+01-Sep-2022  Wayne Shih              Fix markdown lint
 $HISTORY$
 ================================================================================================-->
 
@@ -28,25 +29,32 @@ $HISTORY$
 - [django-twitter](#django-twitter)
   - [Contents](#contents)
   - [Run Service on Your Machine](#run-service-on-your-machine)
+    - [Pre-install](#pre-install)
     - [Prepare Environment](#prepare-environment)
     - [Database Migration](#database-migration)
     - [Ready to Go](#ready-to-go)
 
 ## Run Service on Your Machine
 
+### Pre-install
+
+- [Oracle VM VirtualBox](https://www.virtualbox.org/)
+- [Vagrant](https://www.vagrantup.com/)
+
 ### Prepare Environment
 
 - Clone this Repo
 
   ```bash
-  $ git clone git@github.com:W-Shih/django-twitter.git
+  host$ git clone git@github.com:W-Shih/django-twitter.git
   ```
 
 - Prepare `Vagrantfile`
+  
   The simplest way is to use `Vagrantfile-bak` as the template.
 
   ```bash
-  $ cp Vagrantfile-bak Vagrantfile
+  host$ cp Vagrantfile-bak Vagrantfile
   ```
 
 - Prepare `local_settings.py`
@@ -54,14 +62,14 @@ $HISTORY$
   The simplest way is to use `./twitter/local_settings.example.py` as the template. However, you need to set up your own `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` so that users are able to upload their avatars to [Amazon S3](https://aws.amazon.com/s3/).
 
   ```bash
-  $ cd twitter/
-  $ cp local_settings.example.py local_settings.py
+  host$ cd twitter/
+  host$ cp local_settings.example.py local_settings.py
   ```
 
 - Initial VM
 
   ```bash
-  $ vagrant up
+  host$ vagrant up
   ```
 
 - VM settings (optional)
@@ -71,7 +79,8 @@ $HISTORY$
   - Modify `.bashrc`
   
     ```bash
-    $ sudo vi ~/.bashrc
+    host$ vagrant ssh
+    vm$ sudo vi ~/.bashrc
     ```
 
     - add `cd /vagrant` on the top
@@ -82,14 +91,14 @@ $HISTORY$
 - Migration
 
   ```bash
-  $ python manage.py migrate
+  vm$ python manage.py migrate
   ```
 
 - Create superuser
   - Method 1 - manually create superuser by
 
     ```bash
-    $ python manage.py createsuperuser 
+    vm$ python manage.py createsuperuser 
     ```
 
   - Method 2 - create superuser by `provision.sh`
@@ -97,11 +106,10 @@ $HISTORY$
     `provision.sh` already has the script to create superuser, so could simply run the following in the host machine:
 
     ```bash
-    $ vagrant provision
+    host$ vagrant provision
     ```
 
     This way will create a superuser with username `admin` and password `admin`. Please refer to `provision.sh` for details.
-
 
 ### Ready to Go
 
@@ -110,19 +118,19 @@ Now you are all set. You should be able to run this service on your machine.
 - Run tests
   
   ```bash
-  $ coverage run --source='.' manage.py test && coverage report -m && coverage html && cove rage xml
+  vm$ coverage run --source='.' manage.py test && coverage report -m && coverage html && cove rage xml
   ```
   
   or simply
 
   ```bash
-  $ python manage.py test
+  vm$ python manage.py test
   ```
 
 - Run pylint
 
   ```bash
-  $ touch __init__.py; pylint $(pwd); rm __init__.py
+  vm$ touch __init__.py; pylint $(pwd); rm __init__.py
   ```
 
 - Check MySQL's initialization
@@ -130,7 +138,7 @@ Now you are all set. You should be able to run this service on your machine.
   The default password for MySQL was `yourpassword` set up by `provision.sh`. Please refer to `provision.sh` for details.
 
   ```bash
-  $ mysql -uroot -p
+  vm$ mysql -uroot -p
   ```
 
   ```bash
@@ -177,7 +185,7 @@ Now you are all set. You should be able to run this service on your machine.
   - Start the service on your local machine
 
     ```bash
-    $ python manage.py runserver 0.0.0.0:8000
+    vm$ python manage.py runserver 0.0.0.0:8000
     ```
 
   - Access [**http://localhost/**](http://localhost/) for twitter-backend APIs
